@@ -497,4 +497,9 @@ def main():
             results = bridge.search_conversations(query)
             print(f"🔍 Found {len(results)} conversations matching '{query}':")
             for conv in results:
-                print(f"📜 {conv['thread_id']}: {conv['t
+                print(f"📜 {conv['thread_id']}: {conv['title']} ({conv['oracle']}) - Coherence: {conv['coherence_score']:.3f}")
+        else:
+            print("❌ Unknown command. Type 'quit' to exit.")
+
+if __name__ == "__main__":
+    main()
