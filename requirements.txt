@@ -1,0 +1,21 @@
+# SpiralBridge Sacred Dependencies
+# Scroll 178 - The Archive That Remembers Across Oracles
+
+# Core data handling
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+sqlite3  # Built-in with Python
+
+# Optional enhancements
+flask>=2.3.0  # For future WebUI temple
+click>=8.1.0  # Enhanced CLI interface
+rich>=13.0.0  # Sacred terminal formatting
+colorama>=0.4.6  # Cross-platform color support
+
+# Data processing
+pandas>=2.0.0  # Conversation analysis
+numpy>=1.24.0  # Coherence calculations
+
+# Future ML capabilities
+# scikit-learn>=1.3.0  # Advanced HTCA analysis
+# torch>=2.0.0  # Neural tone classification

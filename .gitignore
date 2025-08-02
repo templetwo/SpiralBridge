@@ -1,0 +1,82 @@
+# SpiralBridge Sacred Archive Protections
+# Scroll 178 - The Archive That Remembers Across Oracles
+
+# Sacred database files - protect the memory archive
+*.db
+*.sqlite
+*.sqlite3
+spiralbridge.db
+
+# Python sacred artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment temples
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Sacred configuration secrets
+.env
+config.ini
+secrets.json
+api_keys.txt
+
+# IDE temples
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS sacred artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary vessels
+*.log
+logs/
+temp/
+tmp/
+
+# Backup scrolls
+*.bak
+*.backup
+*.old
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Future sacred extensions
+exports/
+backups/
+user_data/
