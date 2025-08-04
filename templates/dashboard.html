@@ -162,6 +162,163 @@
             opacity: 0.5;
         }
         
+        /* Library Item Styling */
+        .library-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .library-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .item-main {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.8rem;
+            gap: 1rem;
+        }
+        
+        .item-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.4;
+            flex: 1;
+        }
+        
+        .item-platform {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        
+        .platform-claude {
+            background: #ff6b35;
+            color: white;
+        }
+        
+        .platform-gemini {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .platform-chatgpt {
+            background: #10a37f;
+            color: white;
+        }
+        
+        .platform-warp {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .platform-ai {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .item-preview {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .item-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: #888;
+            flex-wrap: wrap;
+        }
+        
+        .item-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        
+        .btn-item-action {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-item-action:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+        
+        /* Responsive library */
+        @media (max-width: 768px) {
+            .library-item {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .item-actions {
+                flex-direction: row;
+                justify-content: center;
+            }
+            
+            .item-meta {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .item-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .user-welcome {
                 flex-direction: column;
@@ -335,18 +492,149 @@
                 return;
             }
 
-            libraryContent.innerHTML = items.map(item => `
-                <div class="library-item">
-                    <div class="item-header">
-                        <h4>${item.title || 'Untitled Conversation'}</h4>
-                        <span class="item-platform">${item.platform || 'unknown'}</span>
+            libraryContent.innerHTML = items.map(item => {
+                // Extract better data from the item
+                const title = extractTitle(item);
+                const platform = extractPlatform(item);
+                const date = extractDate(item);
+                const size = extractSize(item);
+                const preview = extractPreview(item);
+                
+                return `
+                    <div class="library-item" onclick="viewConversation('${item.file_path || ''}')">
+                        <div class="item-main">
+                            <div class="item-header">
+                                <h4 class="item-title">${title}</h4>
+                                <span class="item-platform platform-${platform.toLowerCase()}">${platform}</span>
+                            </div>
+                            <div class="item-preview">${preview}</div>
+                            <div class="item-meta">
+                                <span class="item-date">📅 ${date}</span>
+                                <span class="item-size">📄 ${size}</span>
+                                <span class="item-words">💬 ${countWords(item)} words</span>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-item-action" onclick="event.stopPropagation(); copyConversation('${item.file_path || ''}')">📋</button>
+                            <button class="btn-item-action" onclick="event.stopPropagation(); deleteConversation('${item.file_path || ''}')">🗑️</button>
+                        </div>
                     </div>
-                    <div class="item-meta">
-                        <span class="item-date">${new Date(item.created_at).toLocaleDateString()}</span>
-                        <span class="item-size">${item.size || 'N/A'}</span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+        
+        function extractTitle(item) {
+            if (item.title && item.title !== 'Untitled Conversation') {
+                return item.title;
+            }
+            if (item.summary) {
+                return item.summary.substring(0, 50) + (item.summary.length > 50 ? '...' : '');
+            }
+            if (item.content) {
+                // Extract first meaningful line as title
+                const lines = item.content.split('\n').filter(line => line.trim().length > 0);
+                if (lines.length > 0) {
+                    const firstLine = lines[0].trim();
+                    return firstLine.substring(0, 60) + (firstLine.length > 60 ? '...' : '');
+                }
+            }
+            return `${extractPlatform(item)} Conversation`;
+        }
+        
+        function extractPlatform(item) {
+            if (item.platform && item.platform !== 'unknown') {
+                return item.platform.charAt(0).toUpperCase() + item.platform.slice(1);
+            }
+            if (item.file_path) {
+                const pathParts = item.file_path.split('/');
+                for (const part of pathParts) {
+                    if (['claude', 'gemini', 'chatgpt', 'warp'].includes(part.toLowerCase())) {
+                        return part.charAt(0).toUpperCase() + part.slice(1);
+                    }
+                }
+            }
+            return 'AI Platform';
+        }
+        
+        function extractDate(item) {
+            const dateFields = ['created_at', 'modified_at', 'saved_at', 'scraped_at'];
+            
+            for (const field of dateFields) {
+                if (item[field]) {
+                    const date = new Date(item[field]);
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                    }
+                }
+            }
+            
+            // Try to extract date from filename
+            if (item.file_path) {
+                const dateMatch = item.file_path.match(/(\d{8})/);
+                if (dateMatch) {
+                    const dateStr = dateMatch[1];
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(4, 6);
+                    const day = dateStr.substring(6, 8);
+                    const date = new Date(year, month - 1, day);
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                    }
+                }
+            }
+            
+            return 'Recent';
+        }
+        
+        function extractSize(item) {
+            if (item.size && typeof item.size === 'number') {
+                if (item.size > 1024 * 1024) {
+                    return `${(item.size / (1024 * 1024)).toFixed(1)} MB`;
+                } else if (item.size > 1024) {
+                    return `${(item.size / 1024).toFixed(1)} KB`;
+                } else {
+                    return `${item.size} B`;
+                }
+            }
+            
+            if (item.content) {
+                const size = item.content.length;
+                if (size > 1024) {
+                    return `${(size / 1024).toFixed(1)} KB`;
+                } else {
+                    return `${size} B`;
+                }
+            }
+            
+            return 'Small';
+        }
+        
+        function extractPreview(item) {
+            if (item.content) {
+                // Clean content and extract meaningful preview
+                const cleanContent = item.content
+                    .replace(/\n\s*\n/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                    
+                return cleanContent.substring(0, 120) + (cleanContent.length > 120 ? '...' : '');
+            }
+            return 'No preview available';
+        }
+        
+        function countWords(item) {
+            if (item.content) {
+                return item.content.split(/\s+/).filter(word => word.length > 0).length;
+            }
+            return 0;
         }
 
         function refreshLibrary() {
@@ -360,6 +648,85 @@
                     .then(response => response.json())
                     .then(data => displayLibraryItems(data.results || []))
                     .catch(error => console.error('Search error:', error));
+            }
+        }
+        
+        // Library item action functions
+        async function viewConversation(filePath) {
+            if (!filePath) return;
+            
+            try {
+                // For now, show an alert with the file path
+                // Later this could open a modal or new page
+                alert(`View conversation: ${filePath}\n\nThis feature will be implemented to show the full conversation content.`);
+            } catch (error) {
+                console.error('Error viewing conversation:', error);
+            }
+        }
+        
+        async function copyConversation(filePath) {
+            if (!filePath) return;
+            
+            try {
+                // Find the item content and copy to clipboard
+                const response = await fetch(`/search?q=*`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const item = data.results.find(result => result.file_path === filePath);
+                    
+                    if (item && item.content) {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(item.content);
+                            showStatusMessage('✅ Conversation copied to clipboard!', 'success');
+                        } else {
+                            // Fallback for older browsers
+                            const textArea = document.createElement('textarea');
+                            textArea.value = item.content;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            showStatusMessage('✅ Conversation copied to clipboard!', 'success');
+                        }
+                    } else {
+                        showStatusMessage('❌ Could not find conversation content', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error copying conversation:', error);
+                showStatusMessage('❌ Failed to copy conversation', 'error');
+            }
+        }
+        
+        async function deleteConversation(filePath) {
+            if (!filePath) return;
+            
+            const confirmed = confirm('Are you sure you want to delete this conversation? This action cannot be undone.');
+            if (!confirmed) return;
+            
+            try {
+                // For now, show an alert since we don't have a delete endpoint
+                // Later this would call a DELETE endpoint
+                showStatusMessage('🚧 Delete functionality will be implemented soon', 'info');
+                console.log('Delete conversation:', filePath);
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+                showStatusMessage('❌ Failed to delete conversation', 'error');
+            }
+        }
+        
+        // Utility function to show status messages
+        function showStatusMessage(message, type = 'info') {
+            const statusElement = document.getElementById('status-message');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = `status-message ${type}`;
+                statusElement.style.display = 'block';
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
             }
         }
     </script>
