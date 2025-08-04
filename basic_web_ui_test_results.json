@@ -1,0 +1,125 @@
+[
+  {
+    "test": "server_availability",
+    "passed": true,
+    "details": {
+      "status_code": 200
+    }
+  },
+  {
+    "test": "api_endpoints",
+    "passed": true,
+    "details": [
+      {
+        "endpoint": "/health",
+        "success": true,
+        "status_code": 200
+      },
+      {
+        "endpoint": "/stats",
+        "success": true,
+        "status_code": 200
+      },
+      {
+        "endpoint": "/search?q=test",
+        "success": true,
+        "status_code": 200
+      }
+    ]
+  },
+  {
+    "test": "url_validation_backend",
+    "passed": true,
+    "details": [
+      {
+        "url": "https://claude.ai/share/12345",
+        "expected": "claude",
+        "detected": "claude",
+        "success": true
+      },
+      {
+        "url": "https://claude.ai/share/test-conversation",
+        "expected": "claude",
+        "detected": "claude",
+        "success": true
+      },
+      {
+        "url": "https://gemini.google.com/share/abc123",
+        "expected": "gemini",
+        "detected": "gemini",
+        "success": true
+      },
+      {
+        "url": "https://g.co/gemini/xyz789",
+        "expected": "gemini",
+        "detected": "gemini",
+        "success": true
+      },
+      {
+        "url": "https://chat.openai.com/share/valid-id",
+        "expected": "chatgpt",
+        "detected": "chatgpt",
+        "success": true
+      },
+      {
+        "url": "https://chatgpt.com/share/new-format",
+        "expected": "chatgpt",
+        "detected": "chatgpt",
+        "success": true
+      },
+      {
+        "url": "https://app.warp.dev/session/test-session",
+        "expected": "warp",
+        "detected": "warp",
+        "success": true
+      },
+      {
+        "url": "https://example.com/share/test",
+        "expected": null,
+        "detected": null,
+        "success": true
+      },
+      {
+        "url": "not-a-url",
+        "expected": null,
+        "detected": null,
+        "success": true
+      }
+    ]
+  },
+  {
+    "test": "scraping_error_handling",
+    "passed": true,
+    "details": [
+      {
+        "url": "https://example.com/share/invalid",
+        "should_fail": true,
+        "api_success": false,
+        "test_passed": true,
+        "message": "URL must be from Claude, Gemini, ChatGPT, or Warp"
+      },
+      {
+        "url": "not-a-url",
+        "should_fail": true,
+        "api_success": false,
+        "test_passed": true,
+        "message": "URL must be from Claude, Gemini, ChatGPT, or Warp"
+      },
+      {
+        "url": "",
+        "should_fail": true,
+        "api_success": false,
+        "test_passed": true,
+        "message": "Please provide a valid URL to scrape"
+      }
+    ]
+  },
+  {
+    "test": "memory_system_integration",
+    "passed": true,
+    "details": {
+      "save_success": true,
+      "save_message": "Content successfully saved to memory system"
+    }
+  }
+]

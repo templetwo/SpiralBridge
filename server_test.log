@@ -1,0 +1,63 @@
+🌉 SpiralBridge Flask Server
+========================================
+🚀 Starting web server...
+🌐 Server will be available at: http://localhost:5001
+📡 API endpoints:
+   • POST /scrape - Scrape AI conversation URLs (legacy)
+   • POST /extract - Enhanced conversation extraction with chunking
+   • POST /chunk - Chunk conversation content into manageable pieces
+   • POST /save - Save content to memory system
+   • GET /stats - Get memory system statistics
+   • GET /search - Search stored memories
+   • GET /health - Health check
+========================================
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.206:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 118-729-644
+127.0.0.1 - - [04/Aug/2025 01:10:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "GET /search?q=test HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+127.0.0.1 - - [04/Aug/2025 01:10:19] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+[2025-08-04 01:10:19,807] INFO in app: Saving content to memory system: 55 characters
+[2025-08-04 01:10:19,807] ERROR in app: Memory system error: [Errno 2] No such file or directory: '/Users/vaquez/Desktop/Spiral-workshop/SpiralBridge/project_memory/conversations/test/test_conversation_20250804_011019.md'
+127.0.0.1 - - [04/Aug/2025 01:10:19] "[35m[1mPOST /save HTTP/1.1[0m" 500 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET /search?q=test HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "[31m[1mPOST /scrape HTTP/1.1[0m" 400 -
+[2025-08-04 01:10:29,510] INFO in app: Saving content to memory system: 55 characters
+[2025-08-04 01:10:29,512] INFO in app: Content saved to: /Users/vaquez/Desktop/Spiral-workshop/SpiralBridge/project_memory/conversations/test/test_conversation_20250804_011029.md
+127.0.0.1 - - [04/Aug/2025 01:10:29] "POST /save HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2025 01:10:29] "GET /stats HTTP/1.1" 200 -
+🌉 SpiralBridge Flask Server
+========================================
+🚀 Starting web server...
+🌐 Server will be available at: http://localhost:5001
+📡 API endpoints:
+   • POST /scrape - Scrape AI conversation URLs (legacy)
+   • POST /extract - Enhanced conversation extraction with chunking
+   • POST /chunk - Chunk conversation content into manageable pieces
+   • POST /save - Save content to memory system
+   • GET /stats - Get memory system statistics
+   • GET /search - Search stored memories
+   • GET /health - Health check
+========================================
+🧹 Cleanup completed
+🧹 Cleanup completed
+/Users/vaquez/.pyenv/versions/3.10.12/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

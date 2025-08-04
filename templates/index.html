@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpiralBridge - AI Conversation Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌉 SpiralBridge</h1>
+            <p class="subtitle">AI Conversation Manager & Memory System</p>
+        </header>
+        
+        <main>
+            <!-- URL Scraping Section -->
+            <section class="scraper-section">
+                <div class="card scraper-card">
+                    <h2>🔗 Scrape AI Conversation</h2>
+                    <p>Extract conversations from Claude, Gemini, ChatGPT, or Warp shared links</p>
+                    
+                    <div class="input-group">
+                        <label for="urlInput">Conversation URL:</label>
+                        <input type="url" id="urlInput" placeholder="https://claude.ai/share/... or https://gemini.google.com/share/..." />
+                        <button id="scrapeBtn" class="btn btn-primary">Scrape</button>
+                    </div>
+                    
+                    <!-- Progress Indicator -->
+                    <div id="progressIndicator" class="progress-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <span class="progress-text">Scraping conversation...</span>
+                    </div>
+                    
+                    <div id="scrapeStatus" class="status-area" style="display: none;"></div>
+                </div>
+            </section>
+            
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <div class="card results-card">
+                    <h2>📄 Scraped Content</h2>
+                    <div class="content-metadata">
+                        <span id="contentLength"></span>
+                        <span id="contentPlatform"></span>
+                        <span id="wordCount"></span>
+                    </div>
+                    <textarea id="contentArea" readonly></textarea>
+                    <div class="action-buttons">
+                        <button id="saveBtn" class="btn btn-success">💾 Save to Memory</button>
+                        <button id="copyBtn" class="btn btn-secondary">📋 Copy to Clipboard</button>
+                        <button id="clearBtn" class="btn btn-danger">🗑️ Clear</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dashboard Section -->
+            <section class="dashboard">
+                <div class="card stats-card">
+                    <h2>📊 Memory Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="totalConversations">{{ stats.total_conversations or 0 }}</span>
+                            <span class="stat-label">Conversations</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="storageSize">{{ stats.storage_size_mb or 0 }}</span>
+                            <span class="stat-label">MB Storage</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="knowledgeEntries">{{ stats.knowledge_entries or 0 }}</span>
+                            <span class="stat-label">Knowledge Entries</span>
+                        </div>
+                    </div>
+                    <button id="refreshStatsBtn" class="btn btn-secondary">🔄 Refresh Stats</button>
+                </div>
+                
+                <div class="card search-card">
+                    <h2>🔍 Search Memories</h2>
+                    <div class="input-group">
+                        <input type="text" id="searchInput" placeholder="Search conversations and memories..." />
+                        <button id="searchBtn" class="btn btn-primary">Search</button>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                
+                <div class="card system-card">
+                    <h2>⚙️ System Status</h2>
+                    <div id="systemStatus" class="system-status">
+                        <div class="status-indicator">
+                            <span class="status-dot healthy"></span>
+                            <span class="status-text">System Operational</span>
+                        </div>
+                    </div>
+                    <button id="healthCheckBtn" class="btn btn-primary">🏥 Health Check</button>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Supported Platforms Info -->
+        <footer class="platform-info">
+            <h3>🎯 Supported Platforms</h3>
+            <div class="platform-grid">
+                <div class="platform-item">
+                    <strong>Claude</strong>
+                    <span>claude.ai/share/*</span>
+                </div>
+                <div class="platform-item">
+                    <strong>Gemini</strong>
+                    <span>gemini.google.com/share/*</span>
+                </div>
+                <div class="platform-item">
+                    <strong>ChatGPT</strong>
+                    <span>chat.openai.com/share/* | chatgpt.com/share/*</span>
+                </div>
+                <div class="platform-item">
+                    <strong>Warp</strong>
+                    <span>app.warp.dev/session/*</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

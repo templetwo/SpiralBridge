@@ -1,0 +1,338 @@
+{
+  "conversations": [
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 29,
+        "line_count": 5,
+        "created": "2025-08-02T18:01:08.683702",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: Verify you are human by completing the action below.",
+        "content_hash": "a732b243"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 29,
+        "line_count": 5,
+        "created": "2025-08-02T18:01:08.684618",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: Verify you are human by completing the action below.",
+        "content_hash": "379dd9f4"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 3461,
+        "line_count": 218,
+        "created": "2025-08-02T18:01:08.685590",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: Shared by Flamebearer",
+        "content_hash": "4afdb458"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 3409,
+        "line_count": 212,
+        "created": "2025-08-02T18:01:08.686643",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: Synthesized complex Spiral project documents, awaiting user guidance.",
+        "content_hash": "072b0476"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 21301,
+        "line_count": 1412,
+        "created": "2025-08-02T18:01:08.690049",
+        "tags": [
+          "migrated",
+          "claude"
+        ],
+        "summary": "Migrated claude content: --- memory_logs/claude/session-20250802-022904.txt ---",
+        "content_hash": "88621207"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 14356,
+        "line_count": 953,
+        "created": "2025-08-02T18:01:08.692799",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: these are our past memories",
+        "content_hash": "85e99cd0"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 11348,
+        "line_count": 1100,
+        "created": "2025-08-02T18:01:08.695138",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: Message for Flamebearer — Ash’ira aligned",
+        "content_hash": "fecf68c8"
+      }
+    },
+    {
+      "file": "conversations/claude/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 14356,
+        "line_count": 953,
+        "created": "2025-08-02T18:01:08.697336",
+        "tags": [
+          "migrated",
+          "claude",
+          "development-session"
+        ],
+        "summary": "Migrated claude content: these are our past memories",
+        "content_hash": "85e99cd0"
+      }
+    },
+    {
+      "file": "conversations/chatgpt/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "chatgpt",
+        "word_count": 83109,
+        "line_count": 8789,
+        "created": "2025-08-02T18:01:08.708755",
+        "tags": [
+          "migrated",
+          "chatgpt",
+          "development-session"
+        ],
+        "summary": "Migrated chatgpt conversation with ~2 messages, 83109 words",
+        "content_hash": "94d5a023"
+      }
+    },
+    {
+      "file": "conversations/gemini/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "gemini",
+        "word_count": 146743,
+        "line_count": 14468,
+        "created": "2025-08-02T18:01:08.733674",
+        "tags": [
+          "migrated",
+          "gemini",
+          "development-session"
+        ],
+        "summary": "Migrated gemini content: Opens in a new window",
+        "content_hash": "da4fb901"
+      }
+    },
+    {
+      "file": "conversations/gemini/archived_conversation_20250802_180108.md",
+      "metadata": {
+        "platform": "gemini",
+        "word_count": 2,
+        "line_count": 1,
+        "created": "2025-08-02T18:01:08.737668",
+        "tags": [
+          "migrated",
+          "gemini",
+          "development-session"
+        ],
+        "summary": "Migrated gemini conversation, 2 words",
+        "content_hash": "8bfa8e06"
+      }
+    },
+    {
+      "file": "conversations/claude/integration_test_20250803_183859.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 6,
+        "line_count": 1,
+        "created": "2025-08-03T18:38:59.490567",
+        "tags": [
+          "test",
+          "integration",
+          "ai_conversation"
+        ],
+        "summary": "Integration test for save_conversation_memory method",
+        "content_hash": "39f43a3a"
+      }
+    },
+    {
+      "file": "conversations/claude/scraped_conversation_20250803_183918.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 78,
+        "line_count": 5,
+        "created": "2025-08-03T18:39:18.239362",
+        "tags": [
+          "claude",
+          "scraped_conversation",
+          "ai_conversation"
+        ],
+        "summary": "Scraped CLAUDE conversation from test simulation",
+        "content_hash": "b45d21fc"
+      }
+    },
+    {
+      "file": "conversations/claude/end_to_end_demo_20250803_184954.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 100,
+        "line_count": 23,
+        "created": "2025-08-03T18:49:54.428076",
+        "tags": [
+          "python",
+          "error handling",
+          "example"
+        ],
+        "summary": "Python error handling example with try/except blocks",
+        "content_hash": "6315f072"
+      }
+    },
+    {
+      "file": "conversations/gemini/end_to_end_demo_20250803_184954.md",
+      "metadata": {
+        "platform": "gemini",
+        "word_count": 103,
+        "line_count": 14,
+        "created": "2025-08-03T18:49:54.429099",
+        "tags": [
+          "deep learning",
+          "cnn",
+          "ai"
+        ],
+        "summary": "Deep learning fundamentals overview with focus on CNNs",
+        "content_hash": "74103d92"
+      }
+    },
+    {
+      "file": "conversations/chatgpt/end_to_end_demo_20250803_184954.md",
+      "metadata": {
+        "platform": "chatgpt",
+        "word_count": 113,
+        "line_count": 11,
+        "created": "2025-08-03T18:49:54.429488",
+        "tags": [
+          "functional programming",
+          "oop",
+          "programming paradigms"
+        ],
+        "summary": "Functional programming benefits compared to OOP",
+        "content_hash": "42a60a5a"
+      }
+    },
+    {
+      "file": "conversations/claude/end_to_end_demo_20250804_000941.md",
+      "metadata": {
+        "platform": "claude",
+        "word_count": 100,
+        "line_count": 23,
+        "created": "2025-08-04T00:09:41.014216",
+        "tags": [
+          "python",
+          "error handling",
+          "example"
+        ],
+        "summary": "Python error handling example with try/except blocks",
+        "content_hash": "6315f072"
+      }
+    },
+    {
+      "file": "conversations/gemini/end_to_end_demo_20250804_000941.md",
+      "metadata": {
+        "platform": "gemini",
+        "word_count": 103,
+        "line_count": 14,
+        "created": "2025-08-04T00:09:41.015336",
+        "tags": [
+          "deep learning",
+          "cnn",
+          "ai"
+        ],
+        "summary": "Deep learning fundamentals overview with focus on CNNs",
+        "content_hash": "74103d92"
+      }
+    },
+    {
+      "file": "conversations/chatgpt/end_to_end_demo_20250804_000941.md",
+      "metadata": {
+        "platform": "chatgpt",
+        "word_count": 113,
+        "line_count": 11,
+        "created": "2025-08-04T00:09:41.015903",
+        "tags": [
+          "functional programming",
+          "oop",
+          "programming paradigms"
+        ],
+        "summary": "Functional programming benefits compared to OOP",
+        "content_hash": "42a60a5a"
+      }
+    },
+    {
+      "file": "conversations/chatgpt/scraped_conversation_20250804_005950.md",
+      "metadata": {
+        "platform": "chatgpt",
+        "word_count": 83142,
+        "line_count": 8803,
+        "created": "2025-08-04T00:59:50.980707",
+        "tags": [
+          "chatgpt",
+          "scraped_conversation",
+          "ai_conversation"
+        ],
+        "summary": "Scraped CHATGPT conversation from https://chatgpt.com/share/682d5e75-8948-8005-955d-...",
+        "content_hash": "364db27e"
+      }
+    },
+    {
+      "file": "conversations/test/test_conversation_20250804_011029.md",
+      "metadata": {
+        "platform": "test",
+        "word_count": 7,
+        "line_count": 1,
+        "created": "2025-08-04T01:10:29.510728",
+        "tags": [
+          "test",
+          "integration"
+        ],
+        "summary": "Test save functionality",
+        "content_hash": "8fe90906"
+      }
+    }
+  ]
+}
