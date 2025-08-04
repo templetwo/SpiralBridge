@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpiralBridge - AI Conversation Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-primary:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .stats-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1 class="hero-title">🌉 SpiralBridge</h1>
+        <p class="hero-subtitle">Scrape, save, and manage your AI conversations from Claude, Gemini, ChatGPT, and Warp</p>
+        <div class="auth-buttons">
+            <a href="/login" class="btn-primary">Login</a>
+            <a href="/register" class="btn-secondary">Register</a>
+        </div>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3 class="feature-title">Multi-Platform Support</h3>
+            <p class="feature-description">Scrape conversations from Claude AI, Google Gemini, ChatGPT, and Warp Terminal with a single click.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <h3 class="feature-title">Personal Libraries</h3>
+            <p class="feature-description">Each user gets their own private library to store and organize conversations securely.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3 class="feature-title">Smart Search</h3>
+            <p class="feature-description">Search through your saved conversations with powerful filtering and categorization options.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3 class="feature-title">Analytics Dashboard</h3>
+            <p class="feature-description">Track your conversation history with detailed statistics and insights.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <h3 class="feature-title">Local Storage</h3>
+            <p class="feature-description">All your data is stored locally on your machine for complete privacy and control.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">Fast & Reliable</h3>
+            <p class="feature-description">Lightning-fast scraping with robust error handling and retry mechanisms.</p>
+        </div>
+    </div>
+
+    {% if stats %}
+    <div class="stats-section">
+        <h3>System Statistics</h3>
+        <p>Total conversations scraped across all platforms</p>
+        <div style="font-size: 2rem; font-weight: bold; color: #667eea; margin-top: 1rem;">
+            {% if stats.total_conversations %}{{ stats.total_conversations }}{% else %}0{% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <footer style="text-align: center; padding: 2rem; color: #666; border-top: 1px solid #eee; margin-top: 3rem;">
+        <p>&copy; 2024 SpiralBridge. Built with ❤️ for AI conversation management.</p>
+        <p>Supported platforms: <strong>Claude AI</strong> • <strong>Google Gemini</strong> • <strong>ChatGPT</strong> • <strong>Warp Terminal</strong></p>
+    </footer>
+</body>
+</html>

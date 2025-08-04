@@ -1,7 +1,32 @@
+#!/usr/bin/env python3
+"""
+SpiralBridge Flask Web Application with User Authentication
+=========================================================
+
+Web interface for the SpiralBridge AI conversation scraper and memory system.
+Provides endpoints for URL scraping, content saving, and UI interaction with user authentication.
+"""
+
 from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 from flask_session import Session
+from flask_cors import CORS
+import os
+import json
+import traceback
+import datetime
 import hashlib
 import uuid
+from typing import Dict, Any, Optional
+
+# Import SpiralBridge modules
+from spiralbridge import (
+    initialize_driver, detect_platform, scrape_with_retry,
+    scrape_claude_conversation, scrape_gemini_conversation, 
+    scrape_chatgpt_conversation, scrape_warp_conversation,
+    get_platform_error_message, extract_conversation_from_url,
+    chunk_conversation
+)
+from local_memory_system import LocalMemorySystem
 
 # In-memory user storage (for demonstration purposes only)
 users = {}
@@ -15,81 +40,32 @@ app.config['JSON_SORT_KEYS'] = False
 # Enable server-side session
 server_session = Session(app)
 
-
-# Helper functions
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-# User Management Routes
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username in users:
-            return jsonify({'success': False, 'message': 'Username already exists'}), 400
-        users[username] = hash_password(password)
-        return jsonify({'success': True, 'message': 'User registered successfully'}), 200
-    return render_template('register.html')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username not in users or users[username] != hash_password(password):
-            return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-        session['username'] = username
-        return jsonify({'success': True, 'message': 'Login successful'}), 200
-    return render_template('login.html')
-
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('index'))
-
-#!/usr/bin/env python3
-"""
-SpiralBridge Flask Web Application
-================================
-
-Web interface for the SpiralBridge AI conversation scraper and memory system.
-Provides endpoints for URL scraping, content saving, and UI interaction.
-"""
-
-from flask import Flask, render_template, request, jsonify, send_from_directory
-from flask_cors import CORS
-import os
-import json
-import traceback
-import datetime
-from typing import Dict, Any, Optional
-
-# Import SpiralBridge modules
-from spiralbridge import (
-    initialize_driver, detect_platform, scrape_with_retry,
-    scrape_claude_conversation, scrape_gemini_conversation, 
-    scrape_chatgpt_conversation, scrape_warp_conversation,
-    get_platform_error_message, extract_conversation_from_url,
-    chunk_conversation
-)
-from local_memory_system import LocalMemorySystem
-
-# Initialize Flask app
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['JSON_SORT_KEYS'] = False
-
 # Enable CORS for JavaScript interactions
 CORS(app, origins=['http://localhost:5001', 'http://127.0.0.1:5001'])
 
 # Initialize memory system with user support
 memory_system = LocalMemorySystem()
+
+# Helper functions
+def hash_password(password: str) -> str:
+    """Hash password using SHA-256."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def require_auth(f):
+    """Decorator to require authentication for routes."""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_user_memory_path(username: str) -> str:
+    """Get user-specific memory path."""
+    user_dir = os.path.join('project_memory', 'users', username, 'conversations')
+    os.makedirs(user_dir, exist_ok=True)
+    return user_dir
 
 # Global browser instance (for reuse)
 browser_instance = None
@@ -114,35 +90,95 @@ def cleanup_browser():
             pass
         browser_instance = None
 
-# Routes
+# User Management Routes
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration endpoint."""
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password are required'}), 400
+        
+        if username in users:
+            return jsonify({'success': False, 'message': 'Username already exists'}), 400
+        
+        # Create user account
+        users[username] = hash_password(password)
+        
+        # Create user directory
+        user_path = get_user_memory_path(username)
+        
+        app.logger.info(f"New user registered: {username}")
+        return jsonify({'success': True, 'message': 'User registered successfully'}), 200
+    
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login endpoint."""
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password are required'}), 400
+        
+        if username not in users or users[username] != hash_password(password):
+            return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+        
+        session['username'] = username
+        app.logger.info(f"User logged in: {username}")
+        return jsonify({'success': True, 'message': 'Login successful', 'redirect': '/dashboard'}), 200
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """User logout endpoint."""
+    username = session.get('username')
+    session.pop('username', None)
+    if username:
+        app.logger.info(f"User logged out: {username}")
+    return redirect(url_for('index'))
+
+# Main Routes
 @app.route('/')
-@app.route('/dashboard')
-def dashboard():
-    """User-specific dashboard."""
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    try:
-        # Get user-specific stats for dashboard
-        stats = memory_system.get_user_stats(session['username'])
-        return render_template('index.html', stats=stats)
-    except Exception as e:
-        app.logger.error(f"Error loading dashboard: {str(e)}")
-        return render_template('index.html', stats={})
-
-
 def index():
-    """Serve the main UI page."""
-    try:
-# Redirect to user dashboard if logged in
+    """Serve the main landing page or redirect to dashboard if logged in."""
     if 'username' in session:
         return redirect(url_for('dashboard'))
     
-    # Get general memory system stats for index
+    try:
+        # Get general system stats for landing page
         stats = memory_system.get_project_stats()
-        return render_template('index.html', stats=stats)
+        return render_template('landing.html', stats=stats)
     except Exception as e:
         app.logger.error(f"Error loading index page: {str(e)}")
-        return render_template('index.html', stats={})
+        return render_template('landing.html', stats={})
+
+@app.route('/dashboard')
+@require_auth
+def dashboard():
+    """User-specific dashboard."""
+    try:
+        username = session['username']
+        user_path = get_user_memory_path(username)
+        
+        # Get user-specific stats
+        user_stats = {
+            'username': username,
+            'conversations_count': len([f for f in os.listdir(user_path) if f.endswith('.md')]) if os.path.exists(user_path) else 0,
+            'storage_path': user_path
+        }
+        
+        return render_template('dashboard.html', stats=user_stats, username=username)
+    except Exception as e:
+        app.logger.error(f"Error loading dashboard: {str(e)}")
+        return render_template('dashboard.html', stats={}, username=session.get('username', 'Unknown'))
 
 @app.route('/scrape', methods=['POST'])
 def scrape_url():
@@ -266,10 +302,9 @@ def scrape_url():
         }), 500
 
 @app.route('/save', methods=['POST'])
+@require_auth
 def save_content():
-    if 'username' not in session:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-    """POST endpoint to save content to memory system."""
+    """POST endpoint to save content to user-specific memory system."""
     try:
         # Parse request data
         data = request.get_json()

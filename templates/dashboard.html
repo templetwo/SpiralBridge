@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SpiralBridge</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+        }
+        
+        .user-welcome {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .welcome-text h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+        
+        .welcome-text p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-logout:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .user-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            opacity: 0.9;
+        }
+        
+        .main-interface {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .interface-header {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .interface-title {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        
+        .interface-body {
+            padding: 2rem;
+        }
+        
+        .personal-library {
+            margin-top: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .library-header {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .library-title {
+            margin: 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .library-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-library {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-library:hover {
+            background: #5a6fd8;
+        }
+        
+        .library-body {
+            padding: 1.5rem;
+        }
+        
+        .library-empty {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+        
+        .library-empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        @media (max-width: 768px) {
+            .user-welcome {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-actions {
+                justify-content: center;
+            }
+            
+            .library-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="user-welcome">
+                <div class="welcome-text">
+                    <h1>Welcome back, {{ username }}! 👋</h1>
+                    <p>Your personal AI conversation library</p>
+                </div>
+                <div class="user-actions">
+                    <a href="/logout" class="btn-logout">Logout</a>
+                </div>
+            </div>
+            
+            <div class="user-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats.conversations_count or 0 }}</div>
+                    <div class="stat-label">Conversations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Platforms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">✨</div>
+                    <div class="stat-label">Personal Library</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Scraping Interface -->
+        <div class="main-interface">
+            <div class="interface-header">
+                <h2 class="interface-title">🤖 Scrape AI Conversations</h2>
+            </div>
+            <div class="interface-body">
+                <!-- URL Input Section -->
+                <div class="url-section">
+                    <label for="url-input" class="input-label">
+                        📝 Paste your AI conversation URL
+                    </label>
+                    <div class="url-input-container">
+                        <input type="url" id="url-input" class="url-input" 
+                               placeholder="https://claude.ai/share/... or https://gemini.google.com/share/...">
+                        <button id="scrape-btn" class="scrape-btn">
+                            <span class="btn-text">Scrape</span>
+                            <div class="spinner" id="spinner"></div>
+                        </button>
+                    </div>
+                    <div class="url-validation" id="url-validation"></div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-section" id="progress-section" style="display: none;">
+                    <div class="progress-message" id="progress-message">Starting scrape...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Content Display Section -->
+                <div class="content-section" id="content-section" style="display: none;">
+                    <label for="scraped-content" class="content-label">
+                        💬 Scraped Content
+                    </label>
+                    <textarea id="scraped-content" class="content-textarea" readonly></textarea>
+                    
+                    <div class="content-actions">
+                        <button id="copy-btn" class="action-btn copy-btn">
+                            📋 Copy to Clipboard
+                        </button>
+                        <button id="save-btn" class="action-btn save-btn">
+                            💾 Save to Library
+                        </button>
+                        <button id="clear-btn" class="action-btn clear-btn">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Messages -->
+                <div class="status-message" id="status-message"></div>
+            </div>
+        </div>
+
+        <!-- Personal Library Section -->
+        <div class="personal-library">
+            <div class="library-header">
+                <h3 class="library-title">📚 Your Personal Library</h3>
+                <div class="library-actions">
+                    <button class="btn-library" onclick="refreshLibrary()">🔄 Refresh</button>
+                    <button class="btn-library" onclick="searchLibrary()">🔍 Search</button>
+                </div>
+            </div>
+            <div class="library-body" id="library-content">
+                <div class="library-empty">
+                    <div class="library-empty-icon">📚</div>
+                    <h4>Your library is empty</h4>
+                    <p>Start by scraping your first AI conversation above!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 SpiralBridge • Your Personal AI Conversation Manager</p>
+                <div class="supported-platforms">
+                    <span class="platform-badge">Claude AI</span>
+                    <span class="platform-badge">Gemini</span>
+                    <span class="platform-badge">ChatGPT</span>
+                    <span class="platform-badge">Warp</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize dashboard-specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded for user: {{ username }}');
+            
+            // Set up authentication headers for API calls
+            window.userAuthenticated = true;
+            window.currentUser = '{{ username }}';
+            
+            // Load user's library
+            loadUserLibrary();
+        });
+
+        async function loadUserLibrary() {
+            try {
+                const response = await fetch('/search?q=*');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayLibraryItems(data.results || []);
+                }
+            } catch (error) {
+                console.error('Error loading library:', error);
+            }
+        }
+
+        function displayLibraryItems(items) {
+            const libraryContent = document.getElementById('library-content');
+            
+            if (items.length === 0) {
+                libraryContent.innerHTML = `
+                    <div class="library-empty">
+                        <div class="library-empty-icon">📚</div>
+                        <h4>Your library is empty</h4>
+                        <p>Start by scraping your first AI conversation above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            libraryContent.innerHTML = items.map(item => `
+                <div class="library-item">
+                    <div class="item-header">
+                        <h4>${item.title || 'Untitled Conversation'}</h4>
+                        <span class="item-platform">${item.platform || 'unknown'}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span class="item-date">${new Date(item.created_at).toLocaleDateString()}</span>
+                        <span class="item-size">${item.size || 'N/A'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function refreshLibrary() {
+            loadUserLibrary();
+        }
+
+        function searchLibrary() {
+            const query = prompt('Enter search terms:');
+            if (query) {
+                fetch(`/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => displayLibraryItems(data.results || []))
+                    .catch(error => console.error('Search error:', error));
+            }
+        }
+    </script>
+</body>
+</html>
