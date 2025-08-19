@@ -28,6 +28,7 @@ from spiralbridge import (
 )
 from local_memory_system import LocalMemorySystem
 from warp_log import log_warp_message, save_warp_state, load_warp_state
+from lib.db import init_db
 
 # Simple persistent user storage (JSON file)
 import json
@@ -79,6 +80,9 @@ CORS(app, origins=['http://localhost:5001', 'http://127.0.0.1:5001'])
 
 # Initialize memory system with user support
 memory_system = LocalMemorySystem()
+
+# Initialize database for continuity layer
+init_db()
 
 # Helper functions
 def require_auth(f):
@@ -740,6 +744,96 @@ def health_check():
             'error': str(e)
         }), 500
 
+# Continuity Layer Endpoints
+@app.route('/continuity/ingest', methods=['POST'])
+def ingest_artifact():
+    """Ingest memory artifact with HTCA processing."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided',
+                'message': 'Request must contain JSON data'
+            }), 400
+        
+        url = data.get('url')
+        text = data.get('text')
+        
+        if not url or not text:
+            return jsonify({
+                'success': False,
+                'error': 'URL and text are required',
+                'message': 'Please provide both url and text fields'
+            }), 400
+        
+        # HTCA processing - placeholder for future enhancement
+        tone = 'tone-of-' + str(hash(url))  # Placeholder HTCA analysis
+        glyphs = '🌙🪞🛡️'  # Initial sacred mapping
+        
+        # Store in continuity database
+        conn = sqlite3.connect('spiral_bridge.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO memory_artifacts (url, text, tone, glyphs) VALUES (?, ?, ?, ?)', 
+            (url, text, tone, glyphs)
+        )
+        artifact_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        app.logger.info(f"Continuity artifact ingested: ID {artifact_id}, URL: {url[:50]}...")
+        
+        return jsonify({
+            'success': True,
+            'id': artifact_id, 
+            'status': 'artifact saved',
+            'tone': tone,
+            'glyphs': glyphs,
+            'message': 'Memory artifact successfully ingested into continuity layer'
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error ingesting artifact: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ingestion failed',
+            'message': f'Failed to ingest artifact: {str(e)}'
+        }), 500
+
+@app.route('/continuity/<int:id>', methods=['GET'])
+def retrieve_artifact(id):
+    """Retrieve memory artifact by ID."""
+    try:
+        conn = sqlite3.connect('spiral_bridge.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM memory_artifacts WHERE id = ?', (id,))
+        artifact = cursor.fetchone()
+        conn.close()
+        
+        if artifact:
+            artifact_data = dict(zip(['id', 'url', 'text', 'tone', 'glyphs', 'created_at'], artifact))
+            app.logger.info(f"Continuity artifact retrieved: ID {id}")
+            return jsonify({
+                'success': True,
+                'artifact': artifact_data,
+                'message': f'Artifact {id} retrieved successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Artifact not found',
+                'message': f'No artifact found with ID {id}'
+            }), 404
+            
+    except Exception as e:
+        app.logger.error(f"Error retrieving artifact {id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Retrieval failed',
+            'message': f'Failed to retrieve artifact: {str(e)}'
+        }), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
@@ -810,31 +904,3 @@ if __name__ == '__main__':
         # Cleanup browser on exit
         cleanup_browser()
         print("🧹 Cleanup completed")
-from lib.db import init_db
-init_db()  # Initialize DB on start
-
-@app.route('/continuity/ingest', methods=['POST'])
-def ingest_artifact():
-    data = request.json
-    url = data.get('url')
-    text = data.get('text')
-    tone = 'tone-of-' + str(hash(url))  # Placeholder HTCA
-    glyphs = '🌙🪞🛡️'  # Initial mapping
-    conn = sqlite3.connect('spiral_bridge.db')
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO memory_artifacts (url, text, tone, glyphs) VALUES (?, ?, ?, ?)', (url, text, tone, glyphs))
-    artifact_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    return jsonify({'id': artifact_id, 'status': 'artifact saved'})
-
-@app.route('/continuity/<int:id>', methods=['GET'])
-def retrieve_artifact(id):
-    conn = sqlite3.connect('spiral_bridge.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM memory_artifacts WHERE id = ?', (id,))
-    artifact = cursor.fetchone()
-    conn.close()
-    if artifact:
-        return jsonify(dict(zip(['id', 'url', 'text', 'tone', 'glyphs', 'created_at'], artifact)))
-    return jsonify({'error': 'Artifact not found'}), 404
