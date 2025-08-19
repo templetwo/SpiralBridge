@@ -17,7 +17,7 @@ import datetime
 import hashlib
 import uuid
 from typing import Dict, Any, Optional
-
+import sqlite3
 # Import SpiralBridge modules
 from spiralbridge import (
     initialize_driver, detect_platform, scrape_with_retry,
