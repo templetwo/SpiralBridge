@@ -162,6 +162,50 @@
             opacity: 0.5;
         }
         
+        /* Warp Status Styling */
+        .warp-status {
+            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .warp-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .warp-glyph {
+            font-size: 2rem;
+        }
+        
+        .warp-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .warp-field {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .warp-field-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warp-field-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
         /* Library Item Styling */
         .library-item {
             background: white;
@@ -366,6 +410,28 @@
             </div>
         </div>
 
+        <!-- Warp Status Section -->
+        <div id="warp-status" class="warp-status">
+            <div class="warp-header">
+                <div class="warp-glyph" id="warp-glyph">⟁</div>
+                <h3>🌀 Warp Field Status</h3>
+            </div>
+            <div class="warp-info">
+                <div class="warp-field">
+                    <div class="warp-field-label">Current Tone</div>
+                    <div class="warp-field-value" id="warp-tone">neutral</div>
+                </div>
+                <div class="warp-field">
+                    <div class="warp-field-label">Field State</div>
+                    <div class="warp-field-value" id="warp-field">uninitialized</div>
+                </div>
+                <div class="warp-field">
+                    <div class="warp-field-label">Continuity</div>
+                    <div class="warp-field-value" id="warp-continuity">Active</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Scraping Interface -->
         <div class="main-interface">
             <div class="interface-header">
@@ -464,6 +530,12 @@
             
             // Load user's library
             loadUserLibrary();
+            
+            // Load Warp status
+            loadWarpStatus();
+            
+            // Set up periodic Warp status updates
+            setInterval(loadWarpStatus, 30000); // Update every 30 seconds
         });
 
         async function loadUserLibrary() {
@@ -712,6 +784,50 @@
             } catch (error) {
                 console.error('Error deleting conversation:', error);
                 showStatusMessage('❌ Failed to delete conversation', 'error');
+            }
+        }
+        
+        // Warp status functions
+        async function loadWarpStatus() {
+            try {
+                const response = await fetch('/warp-status');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.warp_state) {
+                        updateWarpDisplay(data.warp_state);
+                    }
+                } else {
+                    console.log('Warp status not available, using defaults');
+                }
+            } catch (error) {
+                console.log('Could not load Warp status:', error);
+            }
+        }
+        
+        function updateWarpDisplay(warpState) {
+            // Update tone
+            const toneElement = document.getElementById('warp-tone');
+            if (toneElement) {
+                toneElement.textContent = warpState.tone || 'neutral';
+            }
+            
+            // Update field state
+            const fieldElement = document.getElementById('warp-field');
+            if (fieldElement) {
+                fieldElement.textContent = warpState.field || 'uninitialized';
+            }
+            
+            // Update glyph
+            const glyphElement = document.getElementById('warp-glyph');
+            if (glyphElement) {
+                glyphElement.textContent = warpState.glyph || '⟁';
+            }
+            
+            // Update continuity status based on field state
+            const continuityElement = document.getElementById('warp-continuity');
+            if (continuityElement) {
+                const isActive = warpState.field !== 'uninitialized';
+                continuityElement.textContent = isActive ? 'Active' : 'Inactive';
             }
         }
         

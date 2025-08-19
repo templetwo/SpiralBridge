@@ -11,40 +11,82 @@ let isInitialized = false;
  * Initialize all event listeners
  */
 function initializeEventListeners() {
-    // Scraping functionality
-    document.getElementById('scrapeBtn').addEventListener('click', handleScrape);
-    document.getElementById('urlInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleScrape();
-        }
-    });
+    // Scraping functionality - support both old and new IDs
+    const scrapeBtn = document.getElementById('scrapeBtn') || document.getElementById('scrape-btn');
+    const urlInput = document.getElementById('urlInput') || document.getElementById('url-input');
     
-    // Content management
-    document.getElementById('saveBtn').addEventListener('click', handleSave);
-    document.getElementById('copyBtn').addEventListener('click', handleCopy);
-    document.getElementById('clearBtn').addEventListener('click', handleClear);
+    if (scrapeBtn) {
+        scrapeBtn.addEventListener('click', handleScrape);
+    }
+    
+    if (urlInput) {
+        urlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleScrape();
+            }
+        });
+    }
+    
+    // Content management - support both old and new IDs
+    const saveBtn = document.getElementById('saveBtn') || document.getElementById('save-btn');
+    const copyBtn = document.getElementById('copyBtn') || document.getElementById('copy-btn');
+    const clearBtn = document.getElementById('clearBtn') || document.getElementById('clear-btn');
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', handleSave);
+    }
+    
+    if (copyBtn) {
+        copyBtn.addEventListener('click', handleCopy);
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', handleClear);
+    }
     
     // Search functionality
-    document.getElementById('searchBtn').addEventListener('click', handleSearch);
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    });
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchBtn) {
+        searchBtn.addEventListener('click', handleSearch);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+    }
     
     // System functionality
-    document.getElementById('refreshStatsBtn').addEventListener('click', refreshStats);
-    document.getElementById('healthCheckBtn').addEventListener('click', performHealthCheck);
+    const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+    const healthCheckBtn = document.getElementById('healthCheckBtn');
+    
+    if (refreshStatsBtn) {
+        refreshStatsBtn.addEventListener('click', refreshStats);
+    }
+    
+    if (healthCheckBtn) {
+        healthCheckBtn.addEventListener('click', performHealthCheck);
+    }
 }
 
 /**
  * Handle URL scraping
  */
 async function handleScrape() {
-    const urlInput = document.getElementById('urlInput');
-    const scrapeBtn = document.getElementById('scrapeBtn');
-    const statusArea = document.getElementById('scrapeStatus');
-    const progressIndicator = document.getElementById('progressIndicator');
+    // Support both old and new element IDs
+    const urlInput = document.getElementById('urlInput') || document.getElementById('url-input');
+    const scrapeBtn = document.getElementById('scrapeBtn') || document.getElementById('scrape-btn');
+    const statusArea = document.getElementById('scrapeStatus') || document.getElementById('status-message');
+    const progressIndicator = document.getElementById('progressIndicator') || document.getElementById('progress-section');
+    
+    if (!urlInput || !scrapeBtn) {
+        console.error('Required elements not found');
+        return;
+    }
     
     const url = urlInput.value.trim();
     if (!url) {
@@ -76,9 +118,14 @@ async function handleScrape() {
     
     // Update UI for loading state with enhanced progress indication
     scrapeBtn.disabled = true;
+    const originalBtnText = scrapeBtn.textContent;
     scrapeBtn.textContent = '🔄 Scraping...';
     urlInput.disabled = true;
-    progressIndicator.style.display = 'flex';
+    
+    if (progressIndicator) {
+        progressIndicator.style.display = 'flex';
+    }
+    
     updateProgressText('Initializing scraper...');
     showStatus('Connecting to scraping service...', 'info');
     
@@ -108,7 +155,13 @@ async function handleScrape() {
         showStatus('Network error occurred during scraping', 'error');
     } finally {
         // Reset UI state
-        resetScrapingUI();
+        scrapeBtn.disabled = false;
+        scrapeBtn.textContent = originalBtnText;
+        urlInput.disabled = false;
+        
+        if (progressIndicator) {
+            progressIndicator.style.display = 'none';
+        }
     }
 }
 
