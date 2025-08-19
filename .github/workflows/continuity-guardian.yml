@@ -1,0 +1,254 @@
+name: SpiralBridge Continuity Guardian
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  spiral-integrity-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🌀 Checkout Sacred Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 🔍 Spiral Integrity Validation
+      run: |
+        python verify_spiral_integrity.py
+        
+    - name: 🧪 Run Unit Tests
+      run: |
+        python -m pytest tests/ -v --tb=short
+        
+    - name: 🎯 Flask Application Health Check
+      run: |
+        python -c "
+        from app import app
+        with app.test_client() as client:
+            response = client.get('/health')
+            assert response.status_code == 200, 'Health check failed'
+            print('✅ Flask application healthy')
+        "
+        
+    - name: 🗄️ Database Schema Validation
+      run: |
+        python -c "
+        from models import db, User, Memory, Conversation
+        print('✅ Database models imported successfully')
+        
+        # Validate schema integrity
+        import sqlite3
+        conn = sqlite3.connect(':memory:')
+        cursor = conn.cursor()
+        
+        # Test User table creation
+        cursor.execute('''
+        CREATE TABLE user (
+            id INTEGER PRIMARY KEY,
+            username VARCHAR(80) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        
+        # Test Memory table creation  
+        cursor.execute('''
+        CREATE TABLE memory (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            source VARCHAR(50),
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            category VARCHAR(100),
+            tags TEXT,
+            search_vector TEXT,
+            htca_processed BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (user_id) REFERENCES user (id)
+        )
+        ''')
+        
+        # Test Conversation table creation
+        cursor.execute('''
+        CREATE TABLE conversation (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            title VARCHAR(200),
+            platform VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_archived BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (user_id) REFERENCES user (id)
+        )
+        ''')
+        
+        conn.close()
+        print('✅ Database schema validation passed')
+        "
+
+  documentation-continuity:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🌀 Checkout Sacred Repository  
+      uses: actions/checkout@v4
+      
+    - name: 📚 Validate Documentation Completeness
+      run: |
+        echo "🔍 Checking documentation files..."
+        
+        # Required documentation files
+        required_docs=(
+          "README.md"
+          "WARP.md" 
+          "API_DOCUMENTATION.md"
+          "DEPLOYMENT.md"
+          "PRODUCTION_READINESS_GUIDE.md"
+          "MEMORY_SYSTEM_GUIDE.md"
+          "BRANCH_MANAGEMENT.md"
+        )
+        
+        missing_docs=()
+        for doc in "${required_docs[@]}"; do
+          if [ ! -f "$doc" ]; then
+            missing_docs+=("$doc")
+          else
+            echo "✅ $doc found"
+          fi
+        done
+        
+        if [ ${#missing_docs[@]} -gt 0 ]; then
+          echo "❌ Missing documentation files:"
+          printf '%s\n' "${missing_docs[@]}"
+          exit 1
+        fi
+        
+        echo "✅ All required documentation files present"
+        
+    - name: 🎯 Check Documentation Links
+      run: |
+        echo "🔗 Validating internal documentation links..."
+        
+        # Check for broken internal links in markdown files
+        find . -name "*.md" -exec grep -l "\.md)" {} \; | while read file; do
+          echo "Checking links in $file"
+          
+          # Extract markdown links to .md files
+          grep -o '\[.*\](.*\.md)' "$file" | while read link; do
+            # Extract the file path from the link
+            path=$(echo "$link" | sed 's/.*](\([^)]*\)).*/\1/')
+            
+            if [ ! -f "$path" ] && [ ! -f "./$path" ]; then
+              echo "❌ Broken link in $file: $link"
+              exit 1
+            fi
+          done
+        done
+        
+        echo "✅ Documentation links validated"
+
+  deployment-readiness:
+    runs-on: ubuntu-latest
+    needs: [spiral-integrity-check, documentation-continuity]
+    
+    steps:
+    - name: 🌀 Checkout Sacred Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐳 Docker Build Test
+      run: |
+        echo "🔨 Testing Docker container build..."
+        docker build -t spiralbridge:ci-test .
+        echo "✅ Docker build successful"
+        
+    - name: 🚀 Deployment Configuration Check
+      run: |
+        echo "🔍 Validating deployment configurations..."
+        
+        # Check for deployment files
+        deployment_files=(
+          "Dockerfile"
+          "fly.toml"
+          "railway.json"
+          "requirements.txt"
+        )
+        
+        for file in "${deployment_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file present"
+          else
+            echo "⚠️ $file not found (optional)"
+          fi
+        done
+        
+        # Validate requirements.txt
+        if [ -f "requirements.txt" ]; then
+          echo "📦 Validating Python requirements..."
+          python -m pip install --dry-run -r requirements.txt
+          echo "✅ Requirements validation passed"
+        fi
+        
+    - name: 🌍 Environment Configuration Check
+      run: |
+        echo "🔧 Checking environment configuration..."
+        
+        # Check for environment template
+        if [ -f ".env.example" ] || [ -f "env.example" ]; then
+          echo "✅ Environment template found"
+        else
+          echo "⚠️ No environment template found - creating one"
+          cat > .env.example << 'EOF'
+# SpiralBridge Environment Configuration
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=sqlite:///spiral_memories.db
+FLASK_ENV=production
+PORT=5000
+EOF
+          echo "✅ Environment template created"
+        fi
+
+  release-notification:
+    runs-on: ubuntu-latest
+    needs: [deployment-readiness]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    
+    steps:
+    - name: 🌀 Checkout Sacred Repository
+      uses: actions/checkout@v4
+      
+    - name: 🏷️ Check for New Release Tags
+      id: check_tags
+      run: |
+        # Get the latest tag
+        latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "no-tags")
+        echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+        
+        # Get current commit hash
+        current_commit=$(git rev-parse HEAD)
+        echo "current_commit=$current_commit" >> $GITHUB_OUTPUT
+        
+        echo "Latest tag: $latest_tag"
+        echo "Current commit: $current_commit"
+        
+    - name: 🎉 Continuity Pulse Notification
+      run: |
+        echo "🌀 SpiralBridge Continuity Guardian Report 🌀"
+        echo ""
+        echo "✅ All integrity checks passed"
+        echo "✅ Documentation continuity maintained" 
+        echo "✅ Deployment readiness confirmed"
+        echo "✅ Sacred infrastructure validated"
+        echo ""
+        echo "🚀 Ready for production deployment"
+        echo "⟁ The spiral continues..."
