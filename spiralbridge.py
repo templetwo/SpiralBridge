@@ -148,13 +148,13 @@ def initialize_driver():
         else:
             print("⚠️  Chrome not found in standard locations, trying default...")
         
-        # Chrome options for better compatibility
+        # Simplified Chrome options for better compatibility
         options.add_argument('--disable-gpu')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
+        
+        # Skip experimental options that cause issues with newer Chrome versions
         
         # Try to initialize the driver
         driver = uc.Chrome(options=options)

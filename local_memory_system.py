@@ -58,23 +58,49 @@ class LocalMemorySystem:
     def save_conversation_memory(self, content: str, platform: str, 
                                 session_type: str = "development", 
                                 tags: List[str] = None,
-                                summary: str = None) -> str:
-        """Save a conversation with metadata and return the file path."""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{session_type}_{timestamp}.md"
+                                summary: str = None,
+                                title: str = None,
+                                date: str = None,
+                                notes: str = None,
+                                url: str = None,
+                                metadata: Dict[str, Any] = None) -> str:
+        """Save a conversation with enhanced metadata and return the file path."""
+        # Use custom date if provided, otherwise use current timestamp
+        if date:
+            try:
+                # Parse the date if it's a string
+                if isinstance(date, str):
+                    parsed_date = datetime.datetime.fromisoformat(date.replace('Z', '+00:00'))
+                else:
+                    parsed_date = date
+                timestamp = parsed_date.strftime("%Y%m%d_%H%M%S")
+            except (ValueError, TypeError):
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+        # Create filename with title if provided
+        if title:
+            safe_title = re.sub(r'[^\w\-_]', '_', title.lower())[:50]  # Limit length
+            filename = f"{session_type}_{timestamp}_{safe_title}.md"
+        else:
+            filename = f"{session_type}_{timestamp}.md"
+            
         file_path = self.memory_root / "conversations" / platform / filename
         
-        # Extract key information for metadata
-        metadata = self._extract_conversation_metadata(content, platform, tags, summary)
+        # Extract and enhance metadata
+        enhanced_metadata = self._extract_conversation_metadata(
+            content, platform, tags, summary, title, date, notes, url, metadata
+        )
         
-        # Create markdown format with metadata header
-        markdown_content = self._create_markdown_memory(content, metadata)
+        # Create markdown format with enhanced metadata header
+        markdown_content = self._create_enhanced_markdown_memory(content, enhanced_metadata)
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
         
-        # Update index
-        self._update_conversation_index(file_path, metadata)
+        # Update index with enhanced metadata
+        self._update_conversation_index(file_path, enhanced_metadata)
         
         return str(file_path)
     
@@ -325,20 +351,47 @@ Date: {today}
     # Helper methods
     def _extract_conversation_metadata(self, content: str, platform: str, 
                                      tags: List[str] = None, 
-                                     summary: str = None) -> Dict[str, Any]:
-        """Extract metadata from conversation content."""
+                                     summary: str = None,
+                                     title: str = None,
+                                     date: str = None,
+                                     notes: str = None,
+                                     url: str = None,
+                                     metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Extract enhanced metadata from conversation content."""
         word_count = len(content.split())
         lines = content.split('\n')
         
-        return {
+        # Base metadata
+        enhanced_metadata = {
             'platform': platform,
             'word_count': word_count,
             'line_count': len(lines),
             'created': datetime.datetime.now().isoformat(),
             'tags': tags or [],
             'summary': summary or self._auto_generate_summary(content),
-            'content_hash': hashlib.md5(content.encode()).hexdigest()[:8]
+            'content_hash': hashlib.md5(content.encode()).hexdigest()[:8],
+            'title': title or self._extract_title_from_content(content),
+            'custom_date': date,
+            'notes': notes or '',
+            'source_url': url or '',
+            'file_size': len(content.encode('utf-8'))
         }
+        
+        # Merge any additional metadata
+        if metadata:
+            enhanced_metadata.update(metadata)
+        
+        # Extract conversation participants if detectable
+        participants = self._detect_conversation_participants(content)
+        if participants:
+            enhanced_metadata['participants'] = participants
+        
+        # Detect conversation topics/themes
+        topics = self._extract_topics(content)
+        if topics:
+            enhanced_metadata['topics'] = topics
+            
+        return enhanced_metadata
     
     def _create_markdown_memory(self, content: str, metadata: Dict[str, Any]) -> str:
         """Create formatted markdown with metadata header."""
@@ -403,6 +456,143 @@ Metadata: {json.dumps(metadata, indent=2)}
         
         return snippet
     
+    def _create_enhanced_markdown_memory(self, content: str, metadata: Dict[str, Any]) -> str:
+        """Create enhanced markdown with comprehensive metadata header."""
+        # Format the display date
+        display_date = metadata.get('custom_date', metadata.get('created', ''))
+        if display_date:
+            try:
+                if 'T' in display_date:
+                    date_obj = datetime.datetime.fromisoformat(display_date.replace('Z', '+00:00'))
+                    display_date = date_obj.strftime("%B %d, %Y at %I:%M %p")
+            except (ValueError, TypeError):
+                display_date = str(display_date)
+        
+        # Create platform emoji mapping
+        platform_emojis = {
+            'claude': '🧠',
+            'gemini': '✨', 
+            'chatgpt': '💬',
+            'warp': '⚡',
+            'other': '🤖'
+        }
+        
+        platform_emoji = platform_emojis.get(metadata['platform'], '🤖')
+        
+        return f"""# {metadata['title']}
+
+{platform_emoji} **Platform:** {metadata['platform'].title()}  
+📅 **Date:** {display_date}  
+📊 **Stats:** {metadata['word_count']} words, {metadata['line_count']} lines  
+🏷️ **Tags:** {', '.join(metadata.get('tags', []))}  
+📝 **Summary:** {metadata.get('summary', 'No summary available')}
+
+{('🔗 **Source:** ' + metadata['source_url']) if metadata.get('source_url') else ''}
+{('📋 **Notes:** ' + metadata['notes']) if metadata.get('notes') else ''}
+{('👥 **Participants:** ' + ', '.join(metadata['participants'])) if metadata.get('participants') else ''}
+{('🎯 **Topics:** ' + ', '.join(metadata['topics'])) if metadata.get('topics') else ''}
+
+---
+
+## Conversation Content
+
+{content}
+
+---
+
+### Metadata
+```json
+{json.dumps(metadata, indent=2, ensure_ascii=False)}
+```
+
+**File Hash:** `{metadata['content_hash']}`  
+**Size:** {metadata.get('file_size', 0)} bytes  
+**Archived:** {metadata['created']}
+"""
+    
+    def _extract_title_from_content(self, content: str) -> str:
+        """Extract or generate a meaningful title from content."""
+        lines = [line.strip() for line in content.split('\n') if line.strip()]
+        
+        if not lines:
+            return "Empty Conversation"
+        
+        # Look for title-like patterns
+        for line in lines[:5]:  # Check first 5 lines
+            # Skip very short lines or lines with only symbols
+            if len(line) < 10 or line.count('#') > 2:
+                continue
+                
+            # Clean up common artifacts
+            clean_line = re.sub(r'^[#*\-\s]+', '', line)
+            clean_line = re.sub(r'[#*\-\s]+$', '', clean_line)
+            
+            # If it looks like a reasonable title, use it
+            if 20 <= len(clean_line) <= 100 and not clean_line.lower().startswith(('user:', 'assistant:', 'human:')):
+                return clean_line
+        
+        # Fallback: use first substantial line
+        for line in lines[:10]:
+            if len(line) > 15 and ':' not in line[:20]:  # Avoid role indicators
+                title = line[:80] + ('...' if len(line) > 80 else '')
+                return title
+        
+        return "Untitled Conversation"
+    
+    def _detect_conversation_participants(self, content: str) -> List[str]:
+        """Detect conversation participants from content."""
+        participants = set()
+        
+        # Common role patterns
+        role_patterns = [
+            r'^(User|Human|You):\s*',
+            r'^(Assistant|AI|Claude|Gemini|ChatGPT|GPT|Warp):\s*',
+            r'^\*\*(User|Human|Assistant|AI|Claude|Gemini|ChatGPT|GPT|Warp)\*\*:\s*'
+        ]
+        
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            for pattern in role_patterns:
+                match = re.match(pattern, line, re.IGNORECASE)
+                if match:
+                    role = match.group(1).lower()
+                    # Normalize role names
+                    if role in ['user', 'human', 'you']:
+                        participants.add('User')
+                    elif role in ['assistant', 'ai']:
+                        participants.add('Assistant')
+                    else:
+                        participants.add(role.title())
+        
+        return sorted(list(participants))
+    
+    def _extract_topics(self, content: str) -> List[str]:
+        """Extract key topics/themes from conversation content."""
+        topics = set()
+        
+        # Simple keyword-based topic extraction
+        topic_keywords = {
+            'Programming': ['code', 'programming', 'development', 'coding', 'software', 'function', 'class', 'variable'],
+            'Web Development': ['html', 'css', 'javascript', 'react', 'vue', 'angular', 'web', 'frontend', 'backend'],
+            'Data Science': ['data', 'analysis', 'machine learning', 'ai', 'model', 'dataset', 'statistics'],
+            'Database': ['sql', 'database', 'query', 'table', 'mysql', 'postgresql', 'mongodb'],
+            'DevOps': ['docker', 'kubernetes', 'deployment', 'cloud', 'aws', 'azure', 'server'],
+            'Testing': ['test', 'testing', 'unit test', 'integration', 'debugging', 'bug'],
+            'API': ['api', 'rest', 'graphql', 'endpoint', 'http', 'request', 'response'],
+            'UI/UX': ['design', 'user interface', 'user experience', 'ui', 'ux', 'layout', 'styling']
+        }
+        
+        content_lower = content.lower()
+        
+        for topic, keywords in topic_keywords.items():
+            keyword_count = sum(1 for keyword in keywords if keyword in content_lower)
+            # If multiple keywords from a topic are found, include the topic
+            if keyword_count >= 2:
+                topics.add(topic)
+        
+        return sorted(list(topics))
+    
     def _update_conversation_index(self, file_path: Path, metadata: Dict[str, Any]):
         """Update the conversation index for faster searching."""
         index_path = self.memory_root / "conversations" / "index.json"
@@ -414,10 +604,21 @@ Metadata: {json.dumps(metadata, indent=2)}
             else:
                 index = {'conversations': []}
             
-            index['conversations'].append({
+            # Create index entry with enhanced metadata
+            index_entry = {
                 'file': str(file_path.relative_to(self.memory_root)),
-                'metadata': metadata
-            })
+                'file_path': str(file_path),
+                'metadata': metadata,
+                'indexed_at': datetime.datetime.now().isoformat()
+            }
+            
+            index['conversations'].append(index_entry)
+            
+            # Sort by date (newest first)
+            index['conversations'].sort(
+                key=lambda x: x['metadata'].get('custom_date', x['metadata'].get('created', '')),
+                reverse=True
+            )
             
             with open(index_path, 'w', encoding='utf-8') as f:
                 json.dump(index, f, indent=2, ensure_ascii=False)

@@ -438,27 +438,91 @@
                 <h2 class="interface-title">🤖 Scrape AI Conversations</h2>
             </div>
             <div class="interface-body">
-                <!-- URL Input Section -->
+                <!-- Dynamic URL Input Section -->
                 <div class="url-section">
                     <label for="url-input" class="input-label">
                         📝 Paste your AI conversation URL
                     </label>
                     <div class="url-input-container">
-                        <input type="url" id="url-input" class="url-input" 
-                               placeholder="https://claude.ai/share/... or https://gemini.google.com/share/...">
-                        <button id="scrape-btn" class="scrape-btn">
+                        <input type="url" id="url-input" class="url-input dynamic-input" 
+                               placeholder="https://claude.ai/share/... or https://gemini.google.com/share/..."
+                               autocomplete="off">
+                        <div class="platform-indicator" id="platform-indicator">
+                            <span class="platform-icon" id="platform-icon">🤖</span>
+                            <span class="platform-name" id="platform-name">Platform</span>
+                        </div>
+                        <button id="scrape-btn" class="scrape-btn" disabled>
+                            <span class="btn-icon">🚀</span>
                             <span class="btn-text">Scrape</span>
                             <div class="spinner" id="spinner"></div>
                         </button>
                     </div>
                     <div class="url-validation" id="url-validation"></div>
+                    <div class="url-suggestions" id="url-suggestions" style="display: none;">
+                        <div class="suggestion-header">💡 Supported URL formats:</div>
+                        <div class="suggestion-item" onclick="fillExample('claude')">🧠 Claude AI: claude.ai/share/...</div>
+                        <div class="suggestion-item" onclick="fillExample('gemini')">✨ Gemini: gemini.google.com/share/...</div>
+                        <div class="suggestion-item" onclick="fillExample('chatgpt')">💬 ChatGPT: chat.openai.com/share/...</div>
+                        <div class="suggestion-item" onclick="fillExample('warp')">⚡ Warp: app.warp.dev/session/...</div>
+                    </div>
                 </div>
 
-                <!-- Progress Section -->
+                <!-- Enhanced Progress Section -->
                 <div class="progress-section" id="progress-section" style="display: none;">
-                    <div class="progress-message" id="progress-message">Starting scrape...</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
+                    <div class="progress-header">
+                        <div class="progress-message" id="progress-message">Starting scrape...</div>
+                        <div class="progress-percentage" id="progress-percentage">0%</div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="progress-details">
+                        <div class="progress-step" id="progress-step">Initializing...</div>
+                        <div class="progress-time" id="progress-time">Estimated time: calculating...</div>
+                    </div>
+                </div>
+
+                <!-- Metadata Editing Section -->
+                <div class="metadata-section" id="metadata-section" style="display: none;">
+                    <div class="metadata-header">
+                        <h3>📝 Edit Conversation Metadata</h3>
+                        <button class="toggle-metadata" id="toggle-metadata" onclick="toggleMetadata()">▲ Collapse</button>
+                    </div>
+                    <div class="metadata-form" id="metadata-form">
+                        <div class="metadata-row">
+                            <div class="metadata-field">
+                                <label for="meta-title">Title</label>
+                                <input type="text" id="meta-title" class="meta-input" placeholder="Enter conversation title...">
+                            </div>
+                            <div class="metadata-field">
+                                <label for="meta-platform">Platform</label>
+                                <select id="meta-platform" class="meta-select">
+                                    <option value="claude">🧠 Claude AI</option>
+                                    <option value="gemini">✨ Gemini</option>
+                                    <option value="chatgpt">💬 ChatGPT</option>
+                                    <option value="warp">⚡ Warp</option>
+                                    <option value="other">🤖 Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="metadata-row">
+                            <div class="metadata-field">
+                                <label for="meta-date">Date</label>
+                                <input type="datetime-local" id="meta-date" class="meta-input">
+                            </div>
+                            <div class="metadata-field">
+                                <label for="meta-tags">Tags</label>
+                                <input type="text" id="meta-tags" class="meta-input" placeholder="conversation, ai, important...">
+                            </div>
+                        </div>
+                        <div class="metadata-row full-width">
+                            <div class="metadata-field">
+                                <label for="meta-notes">Notes</label>
+                                <textarea id="meta-notes" class="meta-textarea" placeholder="Add your notes about this conversation..."></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -831,7 +895,443 @@
             }
         }
         
-        // Utility function to show status messages
+        // Enhanced functionality for dynamic UI
+        let currentMetadata = {};
+        let progressInterval = null;
+        let progressStartTime = null;
+        
+        // Initialize enhanced scraping functionality
+        function initializeEnhancedScraping() {
+            const urlInput = document.getElementById('url-input');
+            const scrapeBtn = document.getElementById('scrape-btn');
+            const platformIndicator = document.getElementById('platform-indicator');
+            const urlSuggestions = document.getElementById('url-suggestions');
+            const urlValidation = document.getElementById('url-validation');
+            
+            // Real-time URL validation and platform detection
+            urlInput.addEventListener('input', function(e) {
+                const url = e.target.value.trim();
+                validateAndDetectPlatform(url);
+            });
+            
+            // Focus events for suggestions
+            urlInput.addEventListener('focus', function() {
+                if (!urlInput.value.trim()) {
+                    urlSuggestions.style.display = 'block';
+                }
+            });
+            
+            urlInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    urlSuggestions.style.display = 'none';
+                }, 200);
+            });
+            
+            // Enhanced scrape button handler
+            scrapeBtn.addEventListener('click', handleEnhancedScrape);
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !scrapeBtn.disabled) {
+                    handleEnhancedScrape();
+                }
+            });
+        }
+        
+        function validateAndDetectPlatform(url) {
+            const urlInput = document.getElementById('url-input');
+            const scrapeBtn = document.getElementById('scrape-btn');
+            const platformIndicator = document.getElementById('platform-indicator');
+            const platformIcon = document.getElementById('platform-icon');
+            const platformName = document.getElementById('platform-name');
+            const urlValidation = document.getElementById('url-validation');
+            
+            // Clear previous states
+            urlInput.classList.remove('valid', 'invalid');
+            platformIndicator.classList.remove('visible');
+            urlValidation.classList.remove('show', 'valid', 'invalid', 'unsupported');
+            scrapeBtn.disabled = true;
+            
+            if (!url) {
+                platformIcon.textContent = '🤖';
+                platformName.textContent = 'Platform';
+                return;
+            }
+            
+            // Validate URL format
+            let urlObj;
+            try {
+                urlObj = new URL(url);
+            } catch {
+                urlInput.classList.add('invalid');
+                urlValidation.textContent = '❌ Invalid URL format';
+                urlValidation.classList.add('show', 'invalid');
+                return;
+            }
+            
+            // Detect platform
+            const hostname = urlObj.hostname.toLowerCase();
+            let platform = null;
+            let icon = '🤖';
+            let name = 'Unknown';
+            
+            if (hostname.includes('claude.ai')) {
+                platform = 'claude';
+                icon = '🧠';
+                name = 'Claude AI';
+            } else if (hostname.includes('gemini.google.com') || hostname.includes('bard.google.com')) {
+                platform = 'gemini';
+                icon = '✨';
+                name = 'Gemini';
+            } else if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
+                platform = 'chatgpt';
+                icon = '💬';
+                name = 'ChatGPT';
+            } else if (hostname.includes('app.warp.dev')) {
+                platform = 'warp';
+                icon = '⚡';
+                name = 'Warp';
+            }
+            
+            // Update UI based on platform detection
+            platformIcon.textContent = icon;
+            platformName.textContent = name;
+            platformIndicator.classList.add('visible');
+            
+            if (platform) {
+                urlInput.classList.add('valid');
+                urlValidation.textContent = `✅ Supported ${name} URL detected`;
+                urlValidation.classList.add('show', 'valid');
+                scrapeBtn.disabled = false;
+                
+                // Auto-populate metadata
+                currentMetadata.platform = platform;
+                const metaPlatformSelect = document.getElementById('meta-platform');
+                if (metaPlatformSelect) {
+                    metaPlatformSelect.value = platform;
+                }
+            } else {
+                urlValidation.textContent = '⚠️ Platform not supported. Please use Claude, Gemini, ChatGPT, or Warp URLs.';
+                urlValidation.classList.add('show', 'unsupported');
+            }
+        }
+        
+        async function handleEnhancedScrape() {
+            const urlInput = document.getElementById('url-input');
+            const scrapeBtn = document.getElementById('scrape-btn');
+            const progressSection = document.getElementById('progress-section');
+            const metadataSection = document.getElementById('metadata-section');
+            const contentSection = document.getElementById('content-section');
+            
+            const url = urlInput.value.trim();
+            if (!url) {
+                showToast('Please enter a URL', 'error');
+                return;
+            }
+            
+            // Start loading state
+            scrapeBtn.classList.add('loading');
+            scrapeBtn.disabled = true;
+            progressSection.style.display = 'block';
+            
+            // Initialize progress tracking
+            startProgressTracking();
+            
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        url: url,
+                        enable_chunking: true,
+                        chunk_size: 4000,
+                        preserve_speakers: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update progress to 100%
+                    updateProgress(100, 'Extraction completed!', 'Content successfully extracted');
+                    
+                    // Store scraped data globally
+                    window.currentScrapedData = data;
+                    
+                    // Populate metadata with extracted information
+                    populateMetadata(data);
+                    
+                    // Show content and metadata sections
+                    displayScrapedContent(data.content);
+                    metadataSection.style.display = 'block';
+                    contentSection.style.display = 'block';
+                    
+                    showToast(`Successfully scraped ${data.metadata.word_count} words from ${data.platform.toUpperCase()}`, 'success');
+                } else {
+                    throw new Error(data.message || 'Scraping failed');
+                }
+                
+            } catch (error) {
+                console.error('Scraping error:', error);
+                updateProgress(0, 'Scraping failed', error.message);
+                showToast('Scraping failed: ' + error.message, 'error');
+            } finally {
+                // Clean up loading state
+                stopProgressTracking();
+                setTimeout(() => {
+                    scrapeBtn.classList.remove('loading');
+                    scrapeBtn.disabled = false;
+                    progressSection.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        function startProgressTracking() {
+            progressStartTime = Date.now();
+            let progress = 0;
+            const steps = [
+                { progress: 10, message: 'Initializing browser...', detail: 'Setting up Chrome driver' },
+                { progress: 25, message: 'Loading page...', detail: 'Navigating to URL' },
+                { progress: 40, message: 'Detecting content...', detail: 'Analyzing page structure' },
+                { progress: 65, message: 'Extracting conversation...', detail: 'Processing AI content' },
+                { progress: 80, message: 'Cleaning content...', detail: 'Removing UI elements' },
+                { progress: 95, message: 'Finalizing...', detail: 'Preparing results' }
+            ];
+            
+            let stepIndex = 0;
+            
+            progressInterval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const step = steps[stepIndex];
+                    updateProgress(step.progress, step.message, step.detail);
+                    stepIndex++;
+                } else {
+                    // Keep showing progress with slight increments
+                    if (progress < 98) {
+                        progress += Math.random() * 2;
+                        updateProgress(Math.min(progress, 98), 'Processing...', 'Almost done');
+                    }
+                }
+            }, 800);
+        }
+        
+        function stopProgressTracking() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+        
+        function updateProgress(percentage, message, detail) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const progressStep = document.getElementById('progress-step');
+            const progressTime = document.getElementById('progress-time');
+            
+            if (progressFill) progressFill.style.width = percentage + '%';
+            if (progressPercentage) progressPercentage.textContent = Math.round(percentage) + '%';
+            if (progressMessage) progressMessage.textContent = message;
+            if (progressStep) progressStep.textContent = detail;
+            
+            if (progressTime && progressStartTime) {
+                const elapsed = (Date.now() - progressStartTime) / 1000;
+                const estimated = percentage > 0 ? (elapsed / percentage * 100) : 0;
+                const remaining = Math.max(0, estimated - elapsed);
+                progressTime.textContent = `Estimated time: ${remaining.toFixed(1)}s remaining`;
+            }
+        }
+        
+        function populateMetadata(data) {
+            // Auto-populate metadata fields
+            const metaTitle = document.getElementById('meta-title');
+            const metaPlatform = document.getElementById('meta-platform');
+            const metaDate = document.getElementById('meta-date');
+            const metaTags = document.getElementById('meta-tags');
+            
+            // Generate a title from the content
+            let title = 'Untitled Conversation';
+            if (data.content) {
+                const lines = data.content.split('\n').filter(line => line.trim().length > 0);
+                if (lines.length > 0) {
+                    const firstLine = lines[0].trim();
+                    title = firstLine.length > 60 ? firstLine.substring(0, 60) + '...' : firstLine;
+                }
+            }
+            
+            if (metaTitle) metaTitle.value = title;
+            if (metaPlatform) metaPlatform.value = data.platform || 'other';
+            if (metaDate) {
+                const now = new Date();
+                const dateString = now.toISOString().slice(0, 16); // Format for datetime-local
+                metaDate.value = dateString;
+            }
+            if (metaTags) metaTags.value = `${data.platform}, conversation, ai, scraped`;
+            
+            // Store metadata globally
+            currentMetadata = {
+                title: title,
+                platform: data.platform,
+                date: new Date().toISOString(),
+                tags: `${data.platform}, conversation, ai, scraped`.split(', '),
+                notes: '',
+                url: data.metadata?.url || ''
+            };
+        }
+        
+        function displayScrapedContent(content) {
+            const contentTextarea = document.getElementById('scraped-content');
+            if (contentTextarea) {
+                contentTextarea.value = content;
+                contentTextarea.style.height = 'auto';
+                contentTextarea.style.height = Math.min(contentTextarea.scrollHeight, 500) + 'px';
+            }
+        }
+        
+        function toggleMetadata() {
+            const metadataForm = document.getElementById('metadata-form');
+            const toggleBtn = document.getElementById('toggle-metadata');
+            
+            if (metadataForm.classList.contains('collapsed')) {
+                metadataForm.classList.remove('collapsed');
+                metadataForm.style.display = 'block';
+                toggleBtn.innerHTML = '▲ Collapse';
+            } else {
+                metadataForm.classList.add('collapsed');
+                metadataForm.style.display = 'none';
+                toggleBtn.innerHTML = '▼ Expand';
+            }
+        }
+        
+        function fillExample(platform) {
+            const urlInput = document.getElementById('url-input');
+            const examples = {
+                claude: 'https://claude.ai/share/example-conversation-id',
+                gemini: 'https://gemini.google.com/share/example-conversation-id',
+                chatgpt: 'https://chat.openai.com/share/example-conversation-id',
+                warp: 'https://app.warp.dev/session/example-session-id'
+            };
+            
+            if (examples[platform]) {
+                urlInput.value = examples[platform];
+                urlInput.focus();
+                urlInput.select();
+                validateAndDetectPlatform(examples[platform]);
+            }
+        }
+        
+        // Enhanced save functionality with metadata
+        function setupEnhancedSaveBtn() {
+            const saveBtn = document.getElementById('save-btn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', handleEnhancedSave);
+            }
+        }
+        
+        async function handleEnhancedSave() {
+            if (!window.currentScrapedData) {
+                showToast('No content to save', 'error');
+                return;
+            }
+            
+            // Collect current metadata from form
+            const metaTitle = document.getElementById('meta-title')?.value || currentMetadata.title;
+            const metaPlatform = document.getElementById('meta-platform')?.value || currentMetadata.platform;
+            const metaDate = document.getElementById('meta-date')?.value || currentMetadata.date;
+            const metaTags = document.getElementById('meta-tags')?.value || currentMetadata.tags.join(', ');
+            const metaNotes = document.getElementById('meta-notes')?.value || '';
+            
+            const saveBtn = document.getElementById('save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.classList.add('loading');
+            saveBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: window.currentScrapedData.content,
+                        platform: metaPlatform,
+                        url: currentMetadata.url,
+                        session_type: 'scraped_conversation',
+                        tags: metaTags.split(',').map(tag => tag.trim()),
+                        title: metaTitle,
+                        date: metaDate,
+                        notes: metaNotes,
+                        metadata: {
+                            ...window.currentScrapedData.metadata,
+                            title: metaTitle,
+                            custom_date: metaDate,
+                            notes: metaNotes
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Content saved successfully to your library!', 'success');
+                    // Refresh library
+                    loadUserLibrary();
+                } else {
+                    throw new Error(data.message || 'Save failed');
+                }
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Failed to save: ' + error.message, 'error');
+            } finally {
+                saveBtn.classList.remove('loading');
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+        
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-content">
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove();">×</button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        // Utility function to show status messages (legacy support)
         function showStatusMessage(message, type = 'info') {
             const statusElement = document.getElementById('status-message');
             if (statusElement) {
@@ -845,6 +1345,12 @@
                 }, 3000);
             }
         }
+        
+        // Initialize all enhanced features
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEnhancedScraping();
+            setupEnhancedSaveBtn();
+        });
     </script>
 </body>
 </html>
