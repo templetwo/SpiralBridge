@@ -563,20 +563,23 @@ def detect_platform(url):
         url: The URL to check
         
     Returns:
-        str: Platform name ('claude', 'gemini', 'chatgpt', 'warp') or None for unrecognized URLs
+        str: Platform name ('claude', 'gemini', 'chatgpt', 'warp', 'generic') - always returns a platform
     """
     url = url.lower()
     
     if 'claude.ai' in url:
         return 'claude'
-    elif 'gemini.google.com' in url or 'g.co' in url or 'bard.google.com' in url:
+    elif 'gemini.google.com' in url or 'g.co/gemini' in url or 'bard.google.com' in url:
         return 'gemini'
     elif 'chat.openai.com' in url or 'chatgpt.com' in url:
         return 'chatgpt'
     elif 'app.warp.dev' in url:
         return 'warp'
+    elif 'g.co' in url:  # Generic Google short links
+        return 'google_generic'
     else:
-        return None
+        # Fallback - attempt to scrape any URL as generic
+        return 'generic'
 
 def ensure_platform_directory(platform):
     """Create platform-specific directory under memory_logs/ if it doesn't exist."""
@@ -915,7 +918,9 @@ def extract_conversation_from_url(url, timeout=20, max_attempts=3):
                 'claude': scrape_claude_conversation,
                 'gemini': scrape_gemini_conversation,
                 'chatgpt': scrape_chatgpt_conversation,
-                'warp': scrape_warp_conversation
+                'warp': scrape_warp_conversation,
+                'generic': scrape_generic_conversation,
+                'google_generic': scrape_google_generic_conversation
             }
             
             scraping_function = scraping_functions.get(platform)
@@ -1109,6 +1114,224 @@ def chunk_conversation(content, chunk_size=4000, overlap=200, preserve_speakers=
         chunk['metadata']['is_complete'] = (chunk['chunk_index'] == total_chunks - 1)
     
     return chunks
+
+def scrape_generic_conversation(browser, url, timeout=25):
+    """Generic fallback scraping for any URL - attempts multiple strategies.
+    
+    Args:
+        browser: Selenium WebDriver instance
+        url: Any URL to attempt scraping
+        timeout: Wait time in seconds (default: 25 for unknown content)
+        
+    Returns:
+        str: Best-effort scraped content, or informative message if nothing found
+    """
+    try:
+        print(f"🔍 Attempting generic scraping for: {url}")
+        browser.get(url)
+        time.sleep(timeout)
+        
+        # Strategy 1: Try to find conversation-like content with multiple selectors
+        conversation_selectors = [
+            # Common conversation patterns
+            '[data-message-author-role]',  # ChatGPT/AI message roles
+            '[data-testid*="conversation"]',  # Generic conversation test IDs
+            '[data-testid*="message"]',  # Message test IDs
+            '.conversation', '.chat', '.messages',  # Common conversation classes
+            '[role="article"]', '[role="main"] article',  # Semantic article content
+            '.message', '.chat-message', '.turn',  # Message containers
+            'main .content', 'main .text',  # Main content areas
+            '#main', '#content', '#chat',  # Common IDs
+            'p', 'div.text', '.response',  # Fallback text containers
+        ]
+        
+        extracted_content = []
+        found_specific_content = False
+        
+        for selector in conversation_selectors:
+            try:
+                elements = browser.find_elements(By.CSS_SELECTOR, selector)
+                if elements:
+                    print(f"✅ Found {len(elements)} elements with selector: {selector}")
+                    temp_content = []
+                    for element in elements:
+                        try:
+                            text = element.text.strip()
+                            if text and len(text) > 10:  # Only meaningful content
+                                temp_content.append(text)
+                        except:
+                            continue
+                    
+                    if temp_content:
+                        extracted_content = temp_content
+                        found_specific_content = True
+                        break  # Use first successful selector
+            except:
+                continue
+        
+        # Strategy 2: If no specific content found, get all text from body but filter intelligently
+        if not found_specific_content:
+            print("⚠️  No specific conversation elements found, trying full page text...")
+            try:
+                full_text = browser.find_element(By.TAG_NAME, 'body').text.strip()
+                if full_text:
+                    # Break into paragraphs and filter
+                    paragraphs = [p.strip() for p in full_text.split('\n') if p.strip()]
+                    meaningful_paragraphs = []
+                    
+                    for para in paragraphs:
+                        # Filter out common UI elements
+                        if (
+                            len(para) > 15 and  # Minimum length
+                            not para.lower() in ['menu', 'home', 'about', 'contact', 'login', 'signup', 'help'] and
+                            not para.startswith(('©', '®', '™')) and  # Copyright symbols
+                            not any(word in para.lower() for word in ['cookie', 'privacy policy', 'terms of service', 'gdpr']) and
+                            not para.isdigit() and  # Just numbers
+                            not all(c in '.,!?;:-()[]{}"\'/\\|_=+*&^%$#@~`' for c in para)  # Just punctuation
+                        ):
+                            meaningful_paragraphs.append(para)
+                    
+                    if meaningful_paragraphs:
+                        extracted_content = meaningful_paragraphs
+                        print(f"✅ Extracted {len(meaningful_paragraphs)} meaningful text blocks")
+            except Exception as e:
+                print(f"⚠️  Full text extraction failed: {e}")
+        
+        # Strategy 3: Check for login/access walls and provide helpful info
+        login_indicators = [
+            'sign in', 'log in', 'login', 'sign up', 'create account',
+            'authentication required', 'access denied', 'unauthorized',
+            'please log in', 'login required', 'sign in to view'
+        ]
+        
+        full_page_text = ''
+        try:
+            full_page_text = browser.find_element(By.TAG_NAME, 'body').text.lower()
+        except:
+            pass
+        
+        has_login_wall = any(indicator in full_page_text for indicator in login_indicators)
+        
+        # Format results
+        if extracted_content:
+            result = '\n\n'.join(extracted_content)
+            # Clean up the result
+            result = clean_generic_content(result)
+            
+            # Add metadata about the scraping
+            metadata_header = f"# Generic Content Scraped from: {url}\n"
+            metadata_header += f"# Scraped at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            metadata_header += f"# Content blocks found: {len(extracted_content)}\n"
+            if has_login_wall:
+                metadata_header += f"# Note: Login wall detected - content may be limited\n"
+            metadata_header += "\n" + "="*50 + "\n\n"
+            
+            return metadata_header + result
+            
+        else:
+            # No content found - provide informative message
+            message = f"Unable to extract meaningful content from: {url}\n\n"
+            
+            if has_login_wall:
+                message += "🔒 **Login Wall Detected**\n"
+                message += "This content appears to require authentication to access.\n"
+                message += "The URL may be private or require signing in to view.\n\n"
+            
+            message += "**Possible reasons:**\n"
+            message += "• Content requires login/authentication\n"
+            message += "• URL is private or expired\n"
+            message += "• Content is dynamically loaded via JavaScript\n"
+            message += "• Site has anti-bot protection\n"
+            message += "• Content structure is not recognized\n\n"
+            
+            message += f"**Raw page title:** {browser.title}\n" if browser.title else ""
+            message += f"**Scraped at:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            
+            return message
+            
+    except Exception as e:
+        return f"Generic scraping failed for {url}\n\nError: {str(e)}\n\nThis URL could not be processed automatically. The site may have protection against automated access, require authentication, or use a content structure that isn't supported."
+
+def clean_generic_content(content):
+    """Clean generic scraped content by removing common noise.
+    
+    Args:
+        content: Raw scraped content
+        
+    Returns:
+        str: Cleaned content
+    """
+    if not content:
+        return content
+    
+    # Common noise patterns to remove
+    noise_patterns = [
+        r'Accept all cookies?.*?Reject.*?Accept',  # Cookie banners
+        r'This website uses cookies.*?\.',  # Cookie notices  
+        r'Privacy Policy.*?Terms of Service',  # Legal links
+        r'© \d{4}.*',  # Copyright notices
+        r'Skip to.*?content',  # Skip links
+        r'Toggle navigation.*?menu',  # Navigation toggles
+    ]
+    
+    cleaned = content
+    for pattern in noise_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE | re.DOTALL)
+    
+    # Remove excessive whitespace
+    cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)
+    cleaned = re.sub(r'[ \t]+', ' ', cleaned)  # Multiple spaces to single space
+    
+    return cleaned.strip()
+
+def scrape_google_generic_conversation(browser, url, timeout=25):
+    """Specialized scraping for Google short links (g.co) that might redirect.
+    
+    Args:
+        browser: Selenium WebDriver instance
+        url: Google short link URL (g.co/*)
+        timeout: Wait time in seconds (default: 25)
+        
+    Returns:
+        str: Scraped content or redirect information
+    """
+    try:
+        print(f"🔍 Attempting Google generic scraping for: {url}")
+        print("⏳ Following redirects and checking final destination...")
+        
+        # Step 1: Load the URL and see where it redirects
+        browser.get(url)
+        time.sleep(5)  # Wait for redirect
+        
+        final_url = browser.current_url
+        print(f"📍 Redirected to: {final_url}")
+        
+        # Check if we ended up on a known platform after redirect
+        final_platform = detect_platform(final_url)
+        if final_platform in ['claude', 'gemini', 'chatgpt', 'warp']:
+            print(f"🎯 Redirect detected to {final_platform.upper()} - using specific scraper")
+            
+            # Use the appropriate platform-specific scraper
+            if final_platform == 'claude':
+                return scrape_claude_conversation(browser, final_url, timeout)
+            elif final_platform == 'gemini':
+                return scrape_gemini_conversation(browser, final_url, timeout)
+            elif final_platform == 'chatgpt':
+                return scrape_chatgpt_conversation(browser, final_url, timeout)
+            elif final_platform == 'warp':
+                return scrape_warp_conversation(browser, final_url, timeout)
+        
+        # If not a known platform, proceed with generic scraping
+        print("🔄 Using generic scraping approach...")
+        
+        # Wait a bit more for content to load
+        time.sleep(timeout - 5)
+        
+        # Use the generic scraping logic
+        return scrape_generic_conversation(browser, final_url, 5)  # Reduced timeout since we already waited
+        
+    except Exception as e:
+        return f"Google generic scraping failed for {url}\n\nError: {str(e)}\n\nThe short link may be expired, private, or redirect to a protected resource.\n\nFinal URL reached: {getattr(browser, 'current_url', 'Unknown')}"
 
 def clean_chatgpt_conversation_content(content):
     """Clean ChatGPT-specific conversation content markers and formatting.
@@ -1331,6 +1554,18 @@ def main():
             WARP_TIMEOUT = 30
             cleaned_content = scrape_with_retry(
                 scrape_warp_conversation, browser, url, platform, WARP_TIMEOUT, MAX_ATTEMPTS
+            )
+        elif platform == 'generic':
+            # Use longer timeout for unknown content
+            GENERIC_TIMEOUT = 25
+            cleaned_content = scrape_with_retry(
+                scrape_generic_conversation, browser, url, platform, GENERIC_TIMEOUT, MAX_ATTEMPTS
+            )
+        elif platform == 'google_generic':
+            # Use longer timeout for Google redirects
+            GOOGLE_TIMEOUT = 25
+            cleaned_content = scrape_with_retry(
+                scrape_google_generic_conversation, browser, url, platform, GOOGLE_TIMEOUT, MAX_ATTEMPTS
             )
         
         print("-" * 50)
