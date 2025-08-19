@@ -122,13 +122,57 @@ def scrape_with_retry(scraping_function, browser, url, platform, timeout=20, max
 def initialize_driver():
     """Initialize the Chrome browser with undetected_chromedriver."""
     print_progress("Initializing Chrome browser")
-    options = uc.ChromeOptions()
-    # options.add_argument('--headless') # Headless mode is detected by Cloudflare
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    driver = uc.Chrome(options=options)
-    print("✅ Browser initialized successfully")
-    return driver
+    
+    try:
+        options = uc.ChromeOptions()
+        
+        # Chrome binary paths to try on macOS
+        chrome_paths = [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Chrome.app/Contents/MacOS/Chrome',
+            '/usr/bin/google-chrome',
+            '/usr/local/bin/google-chrome'
+        ]
+        
+        # Try to find Chrome binary
+        chrome_binary = None
+        for path in chrome_paths:
+            if os.path.exists(path):
+                chrome_binary = path
+                break
+        
+        # Set Chrome binary if found
+        if chrome_binary:
+            options.binary_location = chrome_binary
+            print(f"🔍 Found Chrome at: {chrome_binary}")
+        else:
+            print("⚠️  Chrome not found in standard locations, trying default...")
+        
+        # Chrome options for better compatibility
+        options.add_argument('--disable-gpu')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        
+        # Try to initialize the driver
+        driver = uc.Chrome(options=options)
+        print("✅ Browser initialized successfully")
+        return driver
+        
+    except Exception as e:
+        error_msg = str(e)
+        if "Binary Location Must be a String" in error_msg or "chrome" in error_msg.lower():
+            print("❌ Chrome browser not found or not properly installed.")
+            print("💡 To fix this issue:")
+            print("   1. Install Google Chrome from: https://www.google.com/chrome/")
+            print("   2. Or install Chromium as an alternative")
+            print("   3. Make sure Chrome is in /Applications/Google Chrome.app/")
+            raise Exception("Chrome browser is required but not found. Please install Google Chrome.")
+        else:
+            print(f"❌ Browser initialization failed: {error_msg}")
+            raise Exception(f"Failed to initialize browser: {error_msg}")
 
 def scrape_claude_content(browser, url, timeout=20):
     """Scrape content from Claude shared link."""

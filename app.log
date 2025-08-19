@@ -1,0 +1,55 @@
+/Users/tony_studio/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+🌉 SpiralBridge Flask Server
+========================================
+🚀 Starting web server...
+🌐 Server will be available at: http://localhost:5001
+📡 API endpoints:
+   • POST /scrape - Scrape AI conversation URLs (legacy)
+   • POST /extract - Enhanced conversation extraction with chunking
+   • POST /chunk - Chunk conversation content into manageable pieces
+   • POST /save - Save content to memory system
+   • GET /stats - Get memory system statistics
+   • GET /search - Search stored memories
+   • GET /health - Health check
+========================================
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.195:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+/Users/tony_studio/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 637-074-023
+127.0.0.1 - - [19/Aug/2025 00:30:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [19/Aug/2025 00:30:01] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [19/Aug/2025 00:30:01] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [19/Aug/2025 00:30:01] "GET /search?q=test HTTP/1.1" 200 -
+ * Detected change in '/Users/tony_studio/SpiralBridge/test_flask_app.py', reloading
+🌉 SpiralBridge Flask Server
+========================================
+🚀 Starting web server...
+🌐 Server will be available at: http://localhost:5001
+📡 API endpoints:
+   • POST /scrape - Scrape AI conversation URLs (legacy)
+   • POST /extract - Enhanced conversation extraction with chunking
+   • POST /chunk - Chunk conversation content into manageable pieces
+   • POST /save - Save content to memory system
+   • GET /stats - Get memory system statistics
+   • GET /search - Search stored memories
+   • GET /health - Health check
+========================================
+🧹 Cleanup completed
+ * Restarting with stat
+/Users/tony_studio/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 637-074-023
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 2 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 2 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

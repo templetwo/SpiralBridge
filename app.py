@@ -111,7 +111,15 @@ def get_browser():
         try:
             browser_instance = initialize_driver()
         except Exception as e:
-            raise Exception(f"Failed to initialize browser: {str(e)}")
+            error_msg = str(e)
+            if "chrome" in error_msg.lower() or "browser" in error_msg.lower():
+                raise Exception(
+                    "Chrome browser is required but not installed. "
+                    "Please install Google Chrome from https://www.google.com/chrome/ "
+                    "and restart the application."
+                )
+            else:
+                raise Exception(f"Failed to initialize browser: {error_msg}")
     return browser_instance
 
 def cleanup_browser():
@@ -904,3 +912,4 @@ if __name__ == '__main__':
         # Cleanup browser on exit
         cleanup_browser()
         print("🧹 Cleanup completed")
+

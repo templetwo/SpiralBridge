@@ -61,6 +61,11 @@ def test_flask_app():
         
         # Test 6: Save endpoint validation
         print("6. Testing save validation (POST /save)...")
+        # First, we need to be logged in to access this endpoint.
+        # We will simulate a login by setting the session cookie.
+        with client.session_transaction() as sess:
+            sess['username'] = 'testuser'
+
         response = client.post('/save', 
                              json={},
                              content_type='application/json')
