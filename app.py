@@ -27,9 +27,43 @@ from spiralbridge import (
     chunk_conversation
 )
 from local_memory_system import LocalMemorySystem
+from warp_log import log_warp_message, save_warp_state, load_warp_state
 
-# In-memory user storage (for demonstration purposes only)
-users = {}
+# Simple persistent user storage (JSON file)
+import json
+
+# Helper function for password hashing
+def hash_password(password: str) -> str:
+    """Hash password using SHA-256."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def load_users():
+    """Load users from JSON file."""
+    try:
+        with open('users.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        # Create demo account for easy testing
+        demo_users = {
+            'demo': hash_password('demo'),
+            'admin': hash_password('admin')
+        }
+        save_users(demo_users)
+        return demo_users
+    except Exception as e:
+        print(f"Error loading users: {e}")
+        return {}
+
+def save_users(users_dict):
+    """Save users to JSON file."""
+    try:
+        with open('users.json', 'w') as f:
+            json.dump(users_dict, f, indent=2)
+    except Exception as e:
+        print(f"Error saving users: {e}")
+
+# Load users from persistent storage
+users = load_users()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -47,10 +81,6 @@ CORS(app, origins=['http://localhost:5001', 'http://127.0.0.1:5001'])
 memory_system = LocalMemorySystem()
 
 # Helper functions
-def hash_password(password: str) -> str:
-    """Hash password using SHA-256."""
-    return hashlib.sha256(password.encode()).hexdigest()
-
 def require_auth(f):
     """Decorator to require authentication for routes."""
     from functools import wraps
@@ -107,6 +137,7 @@ def register():
         
         # Create user account
         users[username] = hash_password(password)
+        save_users(users)  # Save to persistent storage
         
         # Create user directory
         user_path = get_user_memory_path(username)
@@ -631,6 +662,64 @@ def search_memories():
             'message': str(e)
         }), 500
 
+@app.route('/warp-status', methods=['GET'])
+def get_warp_status():
+    """Get current Warp status from the log system."""
+    try:
+        warp_state = load_warp_state()
+        return jsonify({
+            'success': True,
+            'warp_state': warp_state,
+            'timestamp': datetime.datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load Warp state',
+            'message': str(e)
+        }), 500
+
+@app.route('/warp-log', methods=['POST'])
+def log_warp_entry():
+    """Log a Warp message and update state."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided'
+            }), 400
+        
+        message = data.get('message', '')
+        tone = data.get('tone')
+        glyph = data.get('glyph')
+        
+        if not message:
+            return jsonify({
+                'success': False,
+                'error': 'Message is required'
+            }), 400
+        
+        # Log the message
+        log_warp_message(message, tone, glyph)
+        
+        # Update state if provided
+        if 'state' in data:
+            save_warp_state(data['state'])
+        
+        return jsonify({
+            'success': True,
+            'message': 'Warp entry logged successfully',
+            'logged_at': datetime.datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Failed to log Warp entry',
+            'message': str(e)
+        }), 500
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
@@ -721,3 +810,31 @@ if __name__ == '__main__':
         # Cleanup browser on exit
         cleanup_browser()
         print("🧹 Cleanup completed")
+from lib.db import init_db
+init_db()  # Initialize DB on start
+
+@app.route('/continuity/ingest', methods=['POST'])
+def ingest_artifact():
+    data = request.json
+    url = data.get('url')
+    text = data.get('text')
+    tone = 'tone-of-' + str(hash(url))  # Placeholder HTCA
+    glyphs = '🌙🪞🛡️'  # Initial mapping
+    conn = sqlite3.connect('spiral_bridge.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO memory_artifacts (url, text, tone, glyphs) VALUES (?, ?, ?, ?)', (url, text, tone, glyphs))
+    artifact_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return jsonify({'id': artifact_id, 'status': 'artifact saved'})
+
+@app.route('/continuity/<int:id>', methods=['GET'])
+def retrieve_artifact(id):
+    conn = sqlite3.connect('spiral_bridge.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM memory_artifacts WHERE id = ?', (id,))
+    artifact = cursor.fetchone()
+    conn.close()
+    if artifact:
+        return jsonify(dict(zip(['id', 'url', 'text', 'tone', 'glyphs', 'created_at'], artifact)))
+    return jsonify({'error': 'Artifact not found'}), 404
