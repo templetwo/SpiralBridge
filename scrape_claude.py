@@ -10,7 +10,7 @@ import json
 import sys
 from datetime import datetime
 
-def scrape_claude_conversation(url, headless=False, debug=False):
+def scrape_claude_conversation(url, debug=False):
     """
     Scrape Claude conversation from shared link
     Returns structured conversation data for SpiralBridge
@@ -22,8 +22,9 @@ def scrape_claude_conversation(url, headless=False, debug=False):
     print(f"⚡ Initializing sacred connection (undetected mode)...")
 
     options = uc.ChromeOptions()
-    if headless:
-        options.add_argument('--headless=new')
+    # Note: Headless mode gets blocked by Cloudflare's bot detection.
+    # A visible browser window is required for CF challenge to pass.
+    # The window opens briefly (~15s) then closes automatically.
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -222,18 +223,17 @@ def scrape_claude_conversation(url, headless=False, debug=False):
 def main():
     """Main function for CLI usage"""
     if len(sys.argv) < 2:
-        print("Usage: python scrape_claude.py <claude_shared_url> [--headless] [--debug]")
+        print("Usage: python scrape_claude.py <claude_shared_url> [--debug]")
         print("Example: python scrape_claude.py https://claude.ai/share/...")
         sys.exit(1)
 
     url = sys.argv[1]
-    headless = "--headless" in sys.argv
     debug = "--debug" in sys.argv
 
     if "claude" not in url.lower():
         print("⚠️ Warning: URL doesn't appear to be a Claude link")
 
-    conversation_data = scrape_claude_conversation(url, headless=headless, debug=debug)
+    conversation_data = scrape_claude_conversation(url, debug=debug)
 
     if conversation_data:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
