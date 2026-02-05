@@ -6,6 +6,9 @@ beautifulsoup4>=4.12.0
 requests>=2.31.0
 sqlite3  # Built-in with Python
 
+selenium>=4.9.1  # For browser automation
+webdriver_manager>=3.11.1  # Easy WebDriver management
+
 # Optional enhancements
 flask>=2.3.0  # For future WebUI temple
 click>=8.1.0  # Enhanced CLI interface
